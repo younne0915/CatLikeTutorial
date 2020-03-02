@@ -10,7 +10,7 @@ public class InstancedColor : MonoBehaviour
 
     void Awake()
     {
-        OnValidate();
+        OnValidate(); 
     }
 
     void OnValidate()
