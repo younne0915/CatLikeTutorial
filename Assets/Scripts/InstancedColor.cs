@@ -15,11 +15,11 @@ public class InstancedColor : MonoBehaviour
 
     void OnValidate()
     {
-        //if(propertyBlock == null)
-        //{
-        //    propertyBlock = new MaterialPropertyBlock();
-        //}
-        //propertyBlock.SetColor(colorID, color);
-        //GetComponent<MeshRenderer>().SetPropertyBlock(propertyBlock);
+        if (propertyBlock == null)
+        {
+            propertyBlock = new MaterialPropertyBlock();
+        }
+        propertyBlock.SetColor(colorID, color);
+        GetComponent<MeshRenderer>().SetPropertyBlock(propertyBlock);
     }
 }

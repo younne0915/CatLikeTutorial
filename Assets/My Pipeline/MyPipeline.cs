@@ -11,8 +11,18 @@ public class MyPipeline : RenderPipeline
 
     DrawRendererFlags drawFlags;
 
+    const int maxVisibleLights = 4;
+
+    static int visibleLightColorsId = Shader.PropertyToID("_VisibleLightColors");
+    static int visibleLightDirectionsId = Shader.PropertyToID("_VisibleLightDirections");
+
+    Vector4[] visibleLightColors = new Vector4[maxVisibleLights];
+    Vector4[] visibleLightDirections = new Vector4[maxVisibleLights];
+
     public MyPipeline(bool dynamicBatching, bool instancing)
     {
+        GraphicsSettings.lightsUseLinearIntensity = true;
+
         if (dynamicBatching)
         {
             drawFlags = DrawRendererFlags.EnableDynamicBatching;
@@ -67,8 +77,16 @@ public class MyPipeline : RenderPipeline
                                 camera.backgroundColor
                                 );
 
-        //cameraBuffer.BeginSample("Render Camera33");
+        ConfigureLights();
 
+        cameraBuffer.BeginSample("Render Camera33");
+
+        cameraBuffer.SetGlobalVectorArray(
+            visibleLightColorsId, visibleLightColors
+        );
+        cameraBuffer.SetGlobalVectorArray(
+            visibleLightDirectionsId, visibleLightDirections
+        );
 
         context.ExecuteCommandBuffer(cameraBuffer);
         cameraBuffer.Clear();
@@ -98,12 +116,28 @@ public class MyPipeline : RenderPipeline
 
         DrawDefaultPipeline(context, camera);
 
-        //cameraBuffer.EndSample("Render Camera33");
+        cameraBuffer.EndSample("Render Camera33");
 
         context.ExecuteCommandBuffer(cameraBuffer);
         cameraBuffer.Clear();
 
         context.Submit();
+    }
+
+    void ConfigureLights()
+    {
+        for (int i = 0; i < cull.visibleLights.Count; i++)
+        {
+            VisibleLight light = cull.visibleLights[i];
+            visibleLightColors[i] = light.finalColor;
+
+            //因为要求出光源的朝向，相当于要知道光源transform.forward,矩阵第三列是光源z轴在世界坐标系下表示，也就是forward
+            Vector4 v = light.localToWorld.GetColumn(2);
+            v.x = -v.x;
+            v.y = -v.y;
+            v.z = -v.z;
+            visibleLightDirections[i] = v;
+        }
     }
 
     [Conditional("DEVELOPMENT_BUILD"), Conditional("UNITY_EDITOR")]
