@@ -6,8 +6,20 @@ using UnityEngine.Experimental.Rendering;
 [CreateAssetMenu(menuName ="Rendering/My Pipeline")]
 public class MyPipelineAsset : RenderPipelineAsset
 {
+    [SerializeField]
+    bool dynamicBatching;
+
+    [SerializeField]
+    bool instancing;
+
+    /// <summary>
+    /// 每次改变MyPipelineAsset的值，InternalCreatePipeline就会被调用
+    /// 当动态batch和GPU instancing都可用的时候，Unity优先使用GPU instancing
+    /// </summary>
+    /// <returns></returns>
     protected override IRenderPipeline InternalCreatePipeline()
     {
-        return new MyPipeline();
+        //Debug.LogErrorFormat("InternalCreatePipeline dynamicBatching = {0}", dynamicBatching);
+        return new MyPipeline(dynamicBatching, instancing);
     }
 }

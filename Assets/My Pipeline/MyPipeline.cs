@@ -9,6 +9,20 @@ public class MyPipeline : RenderPipeline
 {
     private CullResults cull;
 
+    DrawRendererFlags drawFlags;
+
+    public MyPipeline(bool dynamicBatching, bool instancing)
+    {
+        if (dynamicBatching)
+        {
+            drawFlags = DrawRendererFlags.EnableDynamicBatching;
+        }
+        if (instancing)
+        {
+            drawFlags |= DrawRendererFlags.EnableInstancing;
+        }
+    }
+
     CommandBuffer cameraBuffer = new CommandBuffer
     {
         name = "Render Camera2"
@@ -53,7 +67,7 @@ public class MyPipeline : RenderPipeline
                                 camera.backgroundColor
                                 );
 
-        cameraBuffer.BeginSample("Render Camera33");
+        //cameraBuffer.BeginSample("Render Camera33");
 
 
         context.ExecuteCommandBuffer(cameraBuffer);
@@ -62,6 +76,7 @@ public class MyPipeline : RenderPipeline
         var drawSettings = new DrawRendererSettings(
             camera, new ShaderPassName("SRPDefaultUnlit")
         );
+        drawSettings.flags = drawFlags;
         drawSettings.sorting.flags = SortFlags.CommonOpaque;
 
         var filterSettings = new FilterRenderersSettings(true)
@@ -83,7 +98,7 @@ public class MyPipeline : RenderPipeline
 
         DrawDefaultPipeline(context, camera);
 
-        cameraBuffer.EndSample("Render Camera33");
+        //cameraBuffer.EndSample("Render Camera33");
 
         context.ExecuteCommandBuffer(cameraBuffer);
         cameraBuffer.Clear();
