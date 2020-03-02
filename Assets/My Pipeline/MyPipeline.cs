@@ -79,7 +79,7 @@ public class MyPipeline : RenderPipeline
 
         ConfigureLights();
 
-        cameraBuffer.BeginSample("Render Camera33");
+        //cameraBuffer.BeginSample("Render Camera33");
 
         cameraBuffer.SetGlobalVectorArray(
             visibleLightColorsId, visibleLightColors
@@ -116,7 +116,7 @@ public class MyPipeline : RenderPipeline
 
         DrawDefaultPipeline(context, camera);
 
-        cameraBuffer.EndSample("Render Camera33");
+        //cameraBuffer.EndSample("Render Camera33");
 
         context.ExecuteCommandBuffer(cameraBuffer);
         cameraBuffer.Clear();
