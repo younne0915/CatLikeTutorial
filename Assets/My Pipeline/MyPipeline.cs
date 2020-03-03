@@ -14,10 +14,12 @@ public class MyPipeline : RenderPipeline
     const int maxVisibleLights = 4;
 
     static int visibleLightColorsId = Shader.PropertyToID("_VisibleLightColors");
-    static int visibleLightDirectionsId = Shader.PropertyToID("_VisibleLightDirections");
+    static int visibleLightDirectionsOrPositionsId = Shader.PropertyToID("_VisibleLightDirectionsOrPositions");
+    static int visibleLightAttenuationsId = Shader.PropertyToID("_VisibleLightAttenuations");
 
     Vector4[] visibleLightColors = new Vector4[maxVisibleLights];
-    Vector4[] visibleLightDirections = new Vector4[maxVisibleLights];
+    Vector4[] visibleLightDirectionsOrPositions = new Vector4[maxVisibleLights];
+    Vector4[] visibleLightAttenuations = new Vector4[maxVisibleLights];
 
     public MyPipeline(bool dynamicBatching, bool instancing)
     {
@@ -85,7 +87,10 @@ public class MyPipeline : RenderPipeline
             visibleLightColorsId, visibleLightColors
         );
         cameraBuffer.SetGlobalVectorArray(
-            visibleLightDirectionsId, visibleLightDirections
+            visibleLightDirectionsOrPositionsId, visibleLightDirectionsOrPositions
+        );
+        cameraBuffer.SetGlobalVectorArray(
+            visibleLightAttenuationsId, visibleLightAttenuations
         );
 
         context.ExecuteCommandBuffer(cameraBuffer);
@@ -126,17 +131,40 @@ public class MyPipeline : RenderPipeline
 
     void ConfigureLights()
     {
-        for (int i = 0; i < cull.visibleLights.Count; i++)
+        int i = 0;
+        for (i = 0; i < cull.visibleLights.Count; i++)
         {
+            if (i == maxVisibleLights)
+            {
+                break;
+            }
+
             VisibleLight light = cull.visibleLights[i];
             visibleLightColors[i] = light.finalColor;
 
-            //因为要求出光源的朝向，相当于要知道光源transform.forward,矩阵第三列是光源z轴在世界坐标系下表示，也就是forward
-            Vector4 v = light.localToWorld.GetColumn(2);
-            v.x = -v.x;
-            v.y = -v.y;
-            v.z = -v.z;
-            visibleLightDirections[i] = v;
+            Vector4 attenuation = Vector4.zero;
+
+            if (light.lightType == LightType.Directional)
+            {
+                //因为要求出光源的朝向，相当于要知道光源transform.forward,矩阵第三列是光源z轴在世界坐标系下表示，也就是forward
+                Vector4 v = light.localToWorld.GetColumn(2);
+                v.x = -v.x;
+                v.y = -v.y;
+                v.z = -v.z;
+                visibleLightDirectionsOrPositions[i] = v;
+            }
+            else
+            {
+                //第四列是光源原点在世界坐标系中的位置
+                visibleLightDirectionsOrPositions[i] = light.localToWorld.GetColumn(3);
+                attenuation.x = 1f / Mathf.Max(light.range * light.range, 0.00001f);
+            }
+            visibleLightAttenuations[i] = attenuation;
+        }
+
+        for (; i < maxVisibleLights; i++)
+        {
+            visibleLightColors[i] = Color.clear;
         }
     }
 
