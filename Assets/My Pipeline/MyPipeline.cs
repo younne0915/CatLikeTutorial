@@ -11,15 +11,18 @@ public class MyPipeline : RenderPipeline
 
     DrawRendererFlags drawFlags;
 
-    const int maxVisibleLights = 4;
+    const int maxVisibleLights = 16;
 
     static int visibleLightColorsId = Shader.PropertyToID("_VisibleLightColors");
     static int visibleLightDirectionsOrPositionsId = Shader.PropertyToID("_VisibleLightDirectionsOrPositions");
     static int visibleLightAttenuationsId = Shader.PropertyToID("_VisibleLightAttenuations");
+    static int visibleLightSpotDirectionsId = Shader.PropertyToID("_VisibleLightSpotDirections");
+    static int lightIndicesOffsetAndCountID = Shader.PropertyToID("unity_LightIndicesOffsetAndCount");
 
     Vector4[] visibleLightColors = new Vector4[maxVisibleLights];
     Vector4[] visibleLightDirectionsOrPositions = new Vector4[maxVisibleLights];
     Vector4[] visibleLightAttenuations = new Vector4[maxVisibleLights];
+    Vector4[] visibleLightSpotDirections = new Vector4[maxVisibleLights];
 
     public MyPipeline(bool dynamicBatching, bool instancing)
     {
@@ -79,7 +82,14 @@ public class MyPipeline : RenderPipeline
                                 camera.backgroundColor
                                 );
 
-        ConfigureLights();
+        if (cull.visibleLights.Count > 0)
+        {
+            ConfigureLights();
+        }
+        else
+        {
+            cameraBuffer.SetGlobalVector( lightIndicesOffsetAndCountID, Vector4.zero );
+        }
 
         //cameraBuffer.BeginSample("Render Camera33");
 
@@ -93,13 +103,25 @@ public class MyPipeline : RenderPipeline
             visibleLightAttenuationsId, visibleLightAttenuations
         );
 
+        cameraBuffer.SetGlobalVectorArray(
+            visibleLightSpotDirectionsId, visibleLightSpotDirections
+        );
+
         context.ExecuteCommandBuffer(cameraBuffer);
         cameraBuffer.Clear();
 
-        var drawSettings = new DrawRendererSettings(
-            camera, new ShaderPassName("SRPDefaultUnlit")
-        );
-        drawSettings.flags = drawFlags;
+        var drawSettings = new DrawRendererSettings(camera, new ShaderPassName("SRPDefaultUnlit"))
+        {
+            flags = drawFlags//,
+            //rendererConfiguration = RendererConfiguration.PerObjectLightIndices8
+        };
+
+        if (cull.visibleLights.Count > 0)
+        {
+            drawSettings.rendererConfiguration =
+                RendererConfiguration.PerObjectLightIndices8;
+        }
+
         drawSettings.sorting.flags = SortFlags.CommonOpaque;
 
         var filterSettings = new FilterRenderersSettings(true)
@@ -131,8 +153,8 @@ public class MyPipeline : RenderPipeline
 
     void ConfigureLights()
     {
-        int i = 0;
-        for (i = 0; i < cull.visibleLights.Count; i++)
+        //int i = 0;
+        for (int i = 0; i < cull.visibleLights.Count; i++)
         {
             if (i == maxVisibleLights)
             {
@@ -143,6 +165,7 @@ public class MyPipeline : RenderPipeline
             visibleLightColors[i] = light.finalColor;
 
             Vector4 attenuation = Vector4.zero;
+            attenuation.w = 1f;
 
             if (light.lightType == LightType.Directional)
             {
@@ -158,14 +181,40 @@ public class MyPipeline : RenderPipeline
                 //第四列是光源原点在世界坐标系中的位置
                 visibleLightDirectionsOrPositions[i] = light.localToWorld.GetColumn(3);
                 attenuation.x = 1f / Mathf.Max(light.range * light.range, 0.00001f);
+
+                if (light.lightType == LightType.Spot)
+                {
+                    Vector4 v = light.localToWorld.GetColumn(2);
+                    v.x = -v.x;
+                    v.y = -v.y;
+                    v.z = -v.z;
+                    //存储spot光源方向
+                    visibleLightSpotDirections[i] = v;
+
+                    float outerRad = Mathf.Deg2Rad * 0.5f * light.spotAngle;
+                    float outerCos = Mathf.Cos(outerRad);
+                    float outerTan = Mathf.Tan(outerRad);
+                    float innerCos = Mathf.Cos(Mathf.Atan(((46f / 64f) * outerTan)));
+                    float angleRange = Mathf.Max(innerCos - outerCos, 0.001f);
+                    attenuation.z = 1f / angleRange;
+                    attenuation.w = -outerCos * attenuation.z;
+                }
             }
             visibleLightAttenuations[i] = attenuation;
         }
 
-        for (; i < maxVisibleLights; i++)
+        //如果超过maxVisibleLights数量的灯光，该脚本不会传输给Shader
+        //但是Unity自身可能会对超出maxVisibleLights的灯光，进行unity_4LightIndices0赋值，下标会找不到，_VisibleLightColors越界
+        if (cull.visibleLights.Count > maxVisibleLights)
         {
-            visibleLightColors[i] = Color.clear;
+            int[] lightIndices = cull.GetLightIndexMap();
+            for (int i = maxVisibleLights; i < cull.visibleLights.Count; i++)
+            {
+                lightIndices[i] = -1;
+            }
+            cull.SetLightIndexMap(lightIndices);
         }
+
     }
 
     [Conditional("DEVELOPMENT_BUILD"), Conditional("UNITY_EDITOR")]

@@ -9,20 +9,26 @@ CBUFFER_END
 
 CBUFFER_START(UnityPerDraw)
 float4x4 unity_ObjectToWorld;
+//该物体(顶点、片元)受到几个灯光影响
+float4 unity_LightIndicesOffsetAndCount;
+//受到影响的灯光的下标
+float4 unity_4LightIndices0, unity_4LightIndices1;
 CBUFFER_END
 
-#define MAX_VISIBLE_LIGHTS 4
+#define MAX_VISIBLE_LIGHTS 16
 
 CBUFFER_START(_LightBuffer)
 float4 _VisibleLightColors[MAX_VISIBLE_LIGHTS];
 float4 _VisibleLightDirectionsOrPositions[MAX_VISIBLE_LIGHTS];
 float4 _VisibleLightAttenuations[MAX_VISIBLE_LIGHTS];
+float4 _VisibleLightSpotDirections[MAX_VISIBLE_LIGHTS];
 CBUFFER_END
 
 float3 DiffuseLight(int index, float3 normal, float3 worldPos) {
 	float3 lightColor = _VisibleLightColors[index].rgb;
 	float4 lightPositionOrDirection = _VisibleLightDirectionsOrPositions[index];
 	float4 lightAttenuation = _VisibleLightAttenuations[index];
+	float3 spotDirection = _VisibleLightSpotDirections[index].xyz;
 	float3 lightVector = lightPositionOrDirection.xyz - worldPos * lightPositionOrDirection.w;
 	float3 lightDirection = normalize(lightVector);	
 	float diffuse = saturate(dot(normal, lightDirection));
@@ -30,9 +36,13 @@ float3 DiffuseLight(int index, float3 normal, float3 worldPos) {
 	rangeFade = saturate(1.0 - rangeFade * rangeFade);
 	rangeFade *= rangeFade;
 
+	float spotFade = dot(spotDirection, lightDirection);
+	spotFade = saturate(spotFade * lightAttenuation.z + lightAttenuation.w);
+	spotFade *= spotFade;
+
 	float distanceSqr = max(dot(lightVector, lightVector), 0.00001);
 	//diffuse /= distanceSqr;
-	diffuse *= rangeFade / distanceSqr;
+	diffuse *= spotFade * rangeFade / distanceSqr;
 	return diffuse * lightColor;
 }
 
@@ -58,6 +68,7 @@ struct VertexOutput {
 	float4 clipPos : SV_POSITION;
 	float3 normal : TEXCOORD0;
 	float3 worldPos : TEXCOORD1;
+	float3 vertexLighting : TEXCOORD2;
 	UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
@@ -75,6 +86,14 @@ VertexOutput LitPassVertex(VertexInput input) {
 	output.clipPos = mul(unity_MatrixVP, worldPos);
 	output.normal = mul((float3x3)UNITY_MATRIX_M, input.normal);
 	output.worldPos = worldPos.xyz;
+
+	output.vertexLighting = 0;
+	for (int i = 4; i < min(unity_LightIndicesOffsetAndCount.y, 8); i++) {
+		int lightIndex = unity_4LightIndices1[i - 4];
+		output.vertexLighting +=
+			DiffuseLight(lightIndex, output.normal, output.worldPos);
+	}
+
 	return output;
 }
 
@@ -85,10 +104,32 @@ float4 LitPassFragment(VertexOutput input) : SV_TARGET{
 
 	//取数组PerInstance里_Color属性
 	float3 albedo = UNITY_ACCESS_INSTANCED_PROP(PerInstance, _Color).rgb;
-	float3 diffuseLight = 0;
-	for (int i = 0; i < MAX_VISIBLE_LIGHTS; i++) {
-		diffuseLight += DiffuseLight(i, input.normal, input.worldPos);
+	//float3 diffuseLight = 0;
+	//for (int i = 0; i < MAX_VISIBLE_LIGHTS; i++) {
+	//	diffuseLight += DiffuseLight(i, input.normal, input.worldPos);
+	//}
+	/*for (int i = 0; i < unity_LightIndicesOffsetAndCount.y; i++) {
+		int lightIndex = unity_4LightIndices0[i];
+		diffuseLight +=
+			DiffuseLight(lightIndex, input.normal, input.worldPos);
+	}*/
+
+	int i = 0;
+	int lightIndex = 0;
+	float3 diffuseLight = input.vertexLighting;
+
+	for (i = 0; i < min(unity_LightIndicesOffsetAndCount.y, 4); i++) {
+		lightIndex = unity_4LightIndices0[i];
+		diffuseLight +=
+			DiffuseLight(lightIndex, input.normal, input.worldPos);
 	}
+
+	//for (i = 4; i < min(unity_LightIndicesOffsetAndCount.y, 8); i++) {
+	//	lightIndex = unity_4LightIndices1[i - 4];
+	//	diffuseLight +=
+	//		DiffuseLight(lightIndex, input.normal, input.worldPos);
+	//}
+
 	float3 color = diffuseLight * albedo;
 	return float4(color, 1);
 }
