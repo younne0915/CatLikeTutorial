@@ -9,6 +9,8 @@
         
         Pass
         {
+			Name "younne"
+
 			HLSLPROGRAM
 
 			#pragma target 3.5

@@ -24,6 +24,20 @@ public class MyPipeline : RenderPipeline
     Vector4[] visibleLightAttenuations = new Vector4[maxVisibleLights];
     Vector4[] visibleLightSpotDirections = new Vector4[maxVisibleLights];
 
+    RenderTexture shadowMap;
+
+    CommandBuffer cameraBuffer = new CommandBuffer
+    {
+        name = "Render Camera2"
+    };
+
+    CommandBuffer shadowBuffer = new CommandBuffer
+    {
+        name = "Render Shadows"
+    };
+
+    Material errorMaterial;
+
     public MyPipeline(bool dynamicBatching, bool instancing)
     {
         GraphicsSettings.lightsUseLinearIntensity = true;
@@ -38,12 +52,36 @@ public class MyPipeline : RenderPipeline
         }
     }
 
-    CommandBuffer cameraBuffer = new CommandBuffer
+    void RenderShadows(ScriptableRenderContext context)
     {
-        name = "Render Camera2"
-    };
+        shadowMap = RenderTexture.GetTemporary(
+            512, 512, 16, RenderTextureFormat.Shadowmap
+        );
+        shadowMap.filterMode = FilterMode.Bilinear;
+        shadowMap.wrapMode = TextureWrapMode.Clamp;
 
-    Material errorMaterial;
+        CoreUtils.SetRenderTarget(shadowBuffer, shadowMap, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, ClearFlag.Depth);
+        shadowBuffer.BeginSample("Render Shadows");
+        context.ExecuteCommandBuffer(shadowBuffer);
+        shadowBuffer.Clear();
+
+        Matrix4x4 viewMatrix, projectionMatrix;
+        ShadowSplitData splitData;
+        cull.ComputeSpotShadowMatricesAndCullingPrimitives(
+            0, out viewMatrix, out projectionMatrix, out splitData
+        );
+
+        shadowBuffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
+        context.ExecuteCommandBuffer(shadowBuffer);
+        shadowBuffer.Clear();
+
+        var shadowSettings = new DrawShadowsSettings(cull, 0);
+        context.DrawShadows(ref shadowSettings);
+
+        shadowBuffer.EndSample("Render Shadows");
+        context.ExecuteCommandBuffer(shadowBuffer);
+        shadowBuffer.Clear();
+    }
 
     public override void Render(ScriptableRenderContext renderContext, Camera[] cameras)
     {
@@ -69,6 +107,9 @@ public class MyPipeline : RenderPipeline
             ScriptableRenderContext.EmitWorldGeometryForSceneView(camera);
         }
 #endif
+
+        RenderShadows(context);
+
         CullResults.Cull(ref cullingParameters, context, ref cull);
 
         context.SetupCameraProperties(camera);
@@ -149,6 +190,12 @@ public class MyPipeline : RenderPipeline
         cameraBuffer.Clear();
 
         context.Submit();
+
+        if (shadowMap)
+        {
+            RenderTexture.ReleaseTemporary(shadowMap);
+            shadowMap = null;
+        }
     }
 
     void ConfigureLights()
