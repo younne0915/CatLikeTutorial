@@ -24,6 +24,9 @@ public class MyPipelineAsset : RenderPipelineAsset
     [SerializeField]
     ShadowMapSize shadowMapSize = ShadowMapSize._1024;
 
+    [SerializeField]
+    float shadowDistance = 100f;
+
     /// <summary>
     /// 每次改变MyPipelineAsset的值，InternalCreatePipeline就会被调用
     /// 当动态batch和GPU instancing都可用的时候，Unity优先使用GPU instancing
@@ -32,6 +35,6 @@ public class MyPipelineAsset : RenderPipelineAsset
     protected override IRenderPipeline InternalCreatePipeline()
     {
         //Debug.LogErrorFormat("InternalCreatePipeline dynamicBatching = {0}", dynamicBatching);
-        return new MyPipeline(dynamicBatching, instancing, (int)shadowMapSize);
+        return new MyPipeline(dynamicBatching, instancing, (int)shadowMapSize, shadowDistance);
     }
 }

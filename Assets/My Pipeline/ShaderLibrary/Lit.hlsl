@@ -31,6 +31,7 @@ CBUFFER_START(_ShadowBuffer)
 float4x4 _WorldToShadowMatrices[MAX_VISIBLE_LIGHTS];
 float4 _ShadowData[MAX_VISIBLE_LIGHTS];
 float4 _ShadowMapSize;
+float4 _GlobalShadowData;
 CBUFFER_END
 
 TEXTURE2D_SHADOW(_ShadowMap);
@@ -67,6 +68,9 @@ float ShadowAttenuation(int index, float3 worldPos) {
 	float4 shadowPos = mul(_WorldToShadowMatrices[index], float4(worldPos, 1.0));
 	//阴影贴图需要的uv坐标不是裁剪空间坐标，而是NDC坐标，而且要转到[0,1]
 	shadowPos.xyz /= shadowPos.w;
+	shadowPos.xy = saturate(shadowPos.xy);
+	shadowPos.xy = shadowPos.xy * _GlobalShadowData.x + _ShadowData[index].zw;
+
 
 	float attenuation = 0;
 
