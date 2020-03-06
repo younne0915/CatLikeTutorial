@@ -124,13 +124,37 @@ public class MyPipeline : RenderPipeline
             Matrix4x4 viewMatrix, projectionMatrix;
             ShadowSplitData splitData;
             //计算出世界坐标系到视图坐标系转换矩阵和投影矩阵
-            if (!cull.ComputeSpotShadowMatricesAndCullingPrimitives(
-                i, out viewMatrix, out projectionMatrix, out splitData
-            ))
+            //if (!cull.ComputeSpotShadowMatricesAndCullingPrimitives(
+            //    i, out viewMatrix, out projectionMatrix, out splitData
+            //))
+            //{
+            //    shadowData[i].x = 0f;
+            //    continue;
+            //}
+
+            bool validShadows;
+            if (shadowData[i].z > 0f)
+            {
+                validShadows =
+                    cull.ComputeDirectionalShadowMatricesAndCullingPrimitives(
+                        i, 0, 1, Vector3.right, (int)tileSize,
+                        cull.visibleLights[i].light.shadowNearPlane,
+                        out viewMatrix, out projectionMatrix, out splitData
+                    );
+            }
+            else
+            {
+                validShadows =
+                    cull.ComputeSpotShadowMatricesAndCullingPrimitives(
+                        i, out viewMatrix, out projectionMatrix, out splitData
+                    );
+            }
+            if (!validShadows)
             {
                 shadowData[i].x = 0f;
                 continue;
             }
+
 
             float tileOffsetX = tileIndex % split;
             float tileOffsetY = tileIndex / split;
@@ -369,6 +393,9 @@ public class MyPipeline : RenderPipeline
                 v.y = -v.y;
                 v.z = -v.z;
                 visibleLightDirectionsOrPositions[i] = v;
+                shadow = ConfigureShadows(i, light.light);
+                shadow.z = 1f;
+
             }
             else
             {
@@ -393,14 +420,16 @@ public class MyPipeline : RenderPipeline
                     attenuation.z = 1f / angleRange;
                     attenuation.w = -outerCos * attenuation.z;
 
-                    Light shadowLight = light.light;
-                    Bounds shadowBounds;
-                    if (shadowLight.shadows != LightShadows.None && cull.GetShadowCasterBounds(i, out shadowBounds))
-                    {
-                        shadowTileCount += 1;
-                        shadow.x = shadowLight.shadowStrength;
-                        shadow.y = shadowLight.shadows == LightShadows.Soft ? 1f : 0f;
-                    }
+                    shadow = ConfigureShadows(i, light.light);
+
+                    //Light shadowLight = light.light;
+                    //Bounds shadowBounds;
+                    //if (shadowLight.shadows != LightShadows.None && cull.GetShadowCasterBounds(i, out shadowBounds))
+                    //{
+                    //    shadowTileCount += 1;
+                    //    shadow.x = shadowLight.shadowStrength;
+                    //    shadow.y = shadowLight.shadows == LightShadows.Soft ? 1f : 0f;
+                    //}
                 }
             }
             visibleLightAttenuations[i] = attenuation;
@@ -419,6 +448,23 @@ public class MyPipeline : RenderPipeline
             cull.SetLightIndexMap(lightIndices);
         }
 
+    }
+
+    Vector4 ConfigureShadows(int lightIndex, Light shadowLight)
+    {
+        Vector4 shadow = Vector4.zero;
+        Bounds shadowBounds;
+        if (
+            shadowLight.shadows != LightShadows.None &&
+            cull.GetShadowCasterBounds(lightIndex, out shadowBounds)
+        )
+        {
+            shadowTileCount += 1;
+            shadow.x = shadowLight.shadowStrength;
+            shadow.y =
+                shadowLight.shadows == LightShadows.Soft ? 1f : 0f;
+        }
+        return shadow;
     }
 
     [Conditional("DEVELOPMENT_BUILD"), Conditional("UNITY_EDITOR")]
