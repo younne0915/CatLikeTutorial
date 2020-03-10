@@ -6,15 +6,20 @@
 		_MainTex("Albedo & Alpha", 2D) = "white" {}
 		[Toggle(_CLIPPING)] _Clipping("Alpha Clipping", Float) = 0
 		_Cutoff("Alpha Cutoff", Range(0, 1)) = 0.5
-		[Enum(UnityEngine.Rendering.CullMode)]
-		_Cull("Cull", Float) = 2
+		[Enum(UnityEngine.Rendering.CullMode)]_Cull("Cull", Float) = 2
+		[Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend("Src Blend", Float) = 1
+		[Enum(UnityEngine.Rendering.BlendMode)] _DstBlend("Dst Blend", Float) = 0
+		[Enum(Off, 0, On, 1)] _ZWrite("Z Write", Float) = 1
     }
     SubShader
     {
         
         Pass
         {
+			Blend[_SrcBlend][_DstBlend]
+
 			Cull[_Cull]
+			ZWrite[_ZWrite]
 
 			HLSLPROGRAM
 
@@ -39,6 +44,7 @@
 				"LightMode" = "ShadowCaster"
 			}
 
+			Blend[_SrcBlend][_DstBlend]
 			Cull[_Cull]
 			HLSLPROGRAM
 
