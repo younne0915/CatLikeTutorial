@@ -282,7 +282,10 @@ float4 LitPassFragment(VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_F
 
 	float4 albedoAlpha = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv);
 	albedoAlpha *= UNITY_ACCESS_INSTANCED_PROP(PerInstance, _Color);
+
+#if defined(_CLIPPING)
 	clip(albedoAlpha.a - _Cutoff);
+#endif
 
 	int i = 0;
 	int lightIndex = 0;

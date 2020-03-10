@@ -44,6 +44,7 @@ public class MyPipeline : RenderPipeline
     const string shadowsSoftKeyword = "_SHADOWS_SOFT";
     const string cascadedShadowsHardKeyword = "_CASCADED_SHADOWS_HARD";
     const string cascadedShadowsSoftKeyword = "_CASCADED_SHADOWS_SOFT";
+    const string clippingKeyword = "_CLIPPING";
 
     RenderTexture shadowMap, cascadedShadowMap;
 
@@ -330,6 +331,7 @@ public class MyPipeline : RenderPipeline
 
         CoreUtils.SetKeyword(shadowBuffer, shadowsHardKeyword, hardShadows);
         CoreUtils.SetKeyword(shadowBuffer, shadowsSoftKeyword, softShadows);
+        CoreUtils.SetKeyword(shadowBuffer, clippingKeyword, true);
 
         shadowBuffer.EndSample("Render Shadows");
         context.ExecuteCommandBuffer(shadowBuffer);
@@ -402,6 +404,8 @@ public class MyPipeline : RenderPipeline
         bool hard = shadowLight.shadows == LightShadows.Hard;
         CoreUtils.SetKeyword(shadowBuffer, cascadedShadowsHardKeyword, hard);
         CoreUtils.SetKeyword(shadowBuffer, cascadedShadowsSoftKeyword, !hard);
+        CoreUtils.SetKeyword(shadowBuffer, clippingKeyword, true);
+
         shadowBuffer.EndSample("Render Shadows");
         context.ExecuteCommandBuffer(shadowBuffer);
         shadowBuffer.Clear();
@@ -458,6 +462,8 @@ public class MyPipeline : RenderPipeline
             {
                 cameraBuffer.DisableShaderKeyword(shadowsHardKeyword);
                 cameraBuffer.DisableShaderKeyword(shadowsSoftKeyword);
+                cameraBuffer.DisableShaderKeyword(clippingKeyword);
+
             }
         }
         else
@@ -467,6 +473,7 @@ public class MyPipeline : RenderPipeline
             cameraBuffer.DisableShaderKeyword(cascadedShadowsSoftKeyword);
             cameraBuffer.DisableShaderKeyword(shadowsHardKeyword);
             cameraBuffer.DisableShaderKeyword(shadowsSoftKeyword);
+            cameraBuffer.DisableShaderKeyword(clippingKeyword);
         }
 
         context.SetupCameraProperties(camera);
@@ -531,6 +538,7 @@ public class MyPipeline : RenderPipeline
         DrawDefaultPipeline(context, camera);
 
         //cameraBuffer.EndSample("Render Camera33");
+        CoreUtils.SetKeyword(cameraBuffer, clippingKeyword, true);
 
         context.ExecuteCommandBuffer(cameraBuffer);
         cameraBuffer.Clear();
