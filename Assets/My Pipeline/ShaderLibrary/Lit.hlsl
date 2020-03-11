@@ -115,9 +115,11 @@ float SoftShadowAttenuation(float4 shadowPos, bool cascade = false) {
 	return attenuation;
 }
 
-float ShadowAttenuation(int index, float3 worldPos) {
-
-#if !defined(_SHADOWS_HARD) && !defined(_SHADOWS_SOFT)
+float ShadowAttenuation(int index, float3 worldPos) 
+{
+#if !defined(_RECEIVE_SHADOWS)
+	return 1.0;
+#elif !defined(_SHADOWS_HARD) && !defined(_SHADOWS_SOFT)
 	return 1.0;
 #endif
 
@@ -154,7 +156,9 @@ float ShadowAttenuation(int index, float3 worldPos) {
 
 
 float CascadedShadowAttenuation(float3 worldPos) {
-#if !defined(_CASCADED_SHADOWS_HARD) && !defined(_CASCADED_SHADOWS_SOFT)
+#if !defined(_RECEIVE_SHADOWS)
+	return 1.0;
+#elif !defined(_CASCADED_SHADOWS_HARD) && !defined(_CASCADED_SHADOWS_SOFT)
 	return 1.0;
 #endif
 
@@ -283,7 +287,7 @@ float4 LitPassFragment(VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_F
 	float4 albedoAlpha = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv);
 	albedoAlpha *= UNITY_ACCESS_INSTANCED_PROP(PerInstance, _Color);
 
-#if defined(_CLIPPING)
+#if defined(_CLIPPING_ON)
 	clip(albedoAlpha.a - _Cutoff);
 #endif
 

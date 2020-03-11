@@ -9,7 +9,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: Lit Clip Square
   m_Shader: {fileID: 4800000, guid: 5ede6b5156f8f1742af160b7201d16c6, type: 3}
-  m_ShaderKeywords: _CLIPPING
+  m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
@@ -57,7 +57,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - _BumpScale: 1
-    - _Clipping: 1
+    - _Clipping: 0
     - _Cull: 1
     - _Cutoff: 0.483
     - _DetailNormalMapScale: 1
