@@ -516,6 +516,9 @@ public class MyPipeline : RenderPipeline
                 RendererConfiguration.PerObjectLightIndices8;
         }
 
+        drawSettings.rendererConfiguration |=
+            RendererConfiguration.PerObjectReflectionProbes;
+
         drawSettings.sorting.flags = SortFlags.CommonOpaque;
 
         var filterSettings = new FilterRenderersSettings(true)
