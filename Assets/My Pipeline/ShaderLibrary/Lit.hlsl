@@ -56,6 +56,7 @@ SAMPLER(sampler_MainTex);
 CBUFFER_START(UnityPerMaterial)
 float4 _MainTex_ST;
 float _Cutoff;
+float _Smoothness;
 CBUFFER_END
 
 
