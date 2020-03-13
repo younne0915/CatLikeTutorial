@@ -11,11 +11,13 @@ float4x4 unity_MatrixVP;
 CBUFFER_END
 
 CBUFFER_START(UnityPerDraw)
-float4x4 unity_ObjectToWorld;
+float4x4 unity_ObjectToWorld, unity_WorldToObject;
 //该物体(顶点、片元)受到几个灯光影响
 float4 unity_LightIndicesOffsetAndCount;
 //受到影响的灯光的下标
 float4 unity_4LightIndices0, unity_4LightIndices1;
+float4 unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax;
+float4 unity_SpecCube0_ProbePosition;
 CBUFFER_END
 
 #define MAX_VISIBLE_LIGHTS 16
@@ -61,11 +63,32 @@ float _Cutoff;
 //float _Smoothness;
 CBUFFER_END
 
+float3 BoxProjection(
+	float3 direction, float3 position,
+	float4 cubemapPosition, float4 boxMin, float4 boxMax
+) {
+	UNITY_BRANCH
+		if (cubemapPosition.w > 0) {
+			float3 factors =
+				((direction > 0 ? boxMax.xyz : boxMin.xyz) - position) / direction;
+			float scalar = min(min(factors.x, factors.y), factors.z);
+			direction = direction * scalar + (position - cubemapPosition.xyz);
+		}
+	return direction;
+}
+
+//根据法线和观察向量求出反射向量，对环境的立方体贴图进行采样，求出环境颜色
 float3 SampleEnvironment(LitSurface s) {
+	//求出反射光线
 	float3 reflectVector = reflect(-s.viewDir, s.normal);
+	//根据粗糙程度求出mip下标
 	float mip = PerceptualRoughnessToMipmapLevel(s.perceptualRoughness);
 
-	float3 uvw = reflectVector;
+	//float3 uvw = reflectVector;
+	float3 uvw = BoxProjection(
+		reflectVector, s.position, unity_SpecCube0_ProbePosition,
+		unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax
+	);
 	float4 sample = SAMPLE_TEXTURECUBE_LOD(
 		unity_SpecCube0, samplerunity_SpecCube0, uvw, mip
 	);
@@ -242,12 +265,14 @@ float3 GenericLight(int index, LitSurface s, float shadowAttenuation) {
 }
 
 #define UNITY_MATRIX_M unity_ObjectToWorld
+#define UNITY_MATRIX_I_M unity_WorldToObject
 
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/UnityInstancing.hlsl"
 
 //声明一个数组PerInstanceArray，里面存储float4, _Color
 UNITY_INSTANCING_BUFFER_START(PerInstance)
 UNITY_DEFINE_INSTANCED_PROP(float4, _Color)
+UNITY_DEFINE_INSTANCED_PROP(float, _Metallic)
 UNITY_DEFINE_INSTANCED_PROP(float, _Smoothness)
 UNITY_INSTANCING_BUFFER_END(PerInstance)
 
@@ -282,7 +307,16 @@ VertexOutput LitPassVertex(VertexInput input) {
 	//以unity_InstanceID为下标从数组里取M 矩阵
 	float4 worldPos = mul(UNITY_MATRIX_M, float4(input.pos.xyz, 1.0));
 	output.clipPos = mul(unity_MatrixVP, worldPos);
+	//output.normal = mul((float3x3)UNITY_MATRIX_M, input.normal);
+
+#if defined(UNITY_ASSUME_UNIFORM_SCALING)
 	output.normal = mul((float3x3)UNITY_MATRIX_M, input.normal);
+#else
+	output.normal = normalize(mul(input.normal, (float3x3)UNITY_MATRIX_I_M));
+#endif
+
+	//output.normal = mul((float3x3)UNITY_MATRIX_M, input.normal);
+
 	output.worldPos = worldPos.xyz;
 
 	LitSurface surface = GetLitSurfaceVertex(output.normal, output.worldPos);
@@ -319,7 +353,9 @@ float4 LitPassFragment(VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_F
 	float3 viewDir = normalize(_WorldSpaceCameraPos - input.worldPos.xyz);
 	LitSurface surface = GetLitSurface(
 		input.normal, input.worldPos, viewDir,
-		albedoAlpha.rgb, UNITY_ACCESS_INSTANCED_PROP(PerInstance, _Smoothness)
+		albedoAlpha.rgb,
+		UNITY_ACCESS_INSTANCED_PROP(PerInstance, _Metallic),
+		UNITY_ACCESS_INSTANCED_PROP(PerInstance, _Smoothness)
 	);
 
 	//float3 diffuseLight = input.vertexLighting;
@@ -344,7 +380,7 @@ float4 LitPassFragment(VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_F
 	//float3 color = diffuseLight * albedoAlpha.rgb;
 	//return float4(color, albedoAlpha.a); 
 
-	color = ReflectEnvironment(surface, SampleEnvironment(surface));
+	color += ReflectEnvironment(surface, SampleEnvironment(surface));
 	return float4(color, albedoAlpha.a);
 
 	/*float3 color = diffuseLight * albedo.rgb;

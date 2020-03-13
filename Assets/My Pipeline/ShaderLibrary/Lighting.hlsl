@@ -7,23 +7,25 @@ SAMPLER(samplerunity_SpecCube0);
 struct LitSurface {
 	float3 normal, position, viewDir;
 	float3 diffuse, specular;
-	float perceptualRoughness, roughness;
+	float perceptualRoughness, roughness, fresnelStrength, reflectivity;
 	bool perfectDiffuser;
 };
 
-float3 ReflectEnvironment(LitSurface s, float3 environment) {
+//对环境颜色和高光反射进行差值，根据菲涅尔反射模型
+float3 ReflectEnvironment(LitSurface s, float3 environment) { 
 	if (s.perfectDiffuser) {
 		return 0;
 	}
-
-	environment *= s.specular;
+	//求出菲涅尔系数
+	float fresnel = Pow4(1.0 - saturate(dot(s.normal, s.viewDir)));
+	environment *= lerp(s.specular, s.fresnelStrength, fresnel);
 	environment /= s.roughness * s.roughness + 1.0;
 	return environment;
 }
 
 LitSurface GetLitSurface(
 	float3 normal, float3 position, float3 viewDir,
-	float3 color, float smoothness, bool perfectDiffuser = false
+	float3 color, float metallic, float smoothness, bool perfectDiffuser = false
 ) {
 	LitSurface s;
 	s.normal = normal;
@@ -31,23 +33,31 @@ LitSurface GetLitSurface(
 	s.viewDir = viewDir;
 	s.diffuse = color;
 	if (perfectDiffuser) {
+		s.reflectivity = 0.0;
 		smoothness = 0.0;
 		s.specular = 0.0;
 	}
 	else {
-		s.specular = 0.04;
-		s.diffuse *= 1.0 - 0.04;
+		//s.specular = 0.04;
+		//s.diffuse *= 1.0 - 0.04;
+		s.specular = lerp(0.04, color, metallic);
+		s.reflectivity = lerp(0.04, 1.0, metallic);
+		s.diffuse *= 1.0 - s.reflectivity;
 	}
 	s.perfectDiffuser = perfectDiffuser;
 	s.perceptualRoughness = 1.0 - smoothness;
 	s.roughness = s.perceptualRoughness * s.perceptualRoughness;
+	//s.fresnelStrength = smoothness;
+	s.fresnelStrength = saturate(smoothness + s.reflectivity);
 	return s;
 }
 
+//求出漫反射和镜面反射加权和
 float3 LightSurface(LitSurface s, float3 lightDir) {
 	float3 color = s.diffuse;
 	if (!s.perfectDiffuser) 
 	{
+		//使用CookTorrance BRDF 模型来计算镜面反射
 		float3 halfDir = SafeNormalize(lightDir + s.viewDir);
 		float nh = saturate(dot(s.normal, halfDir));
 		float lh = saturate(dot(lightDir, halfDir));
@@ -61,7 +71,7 @@ float3 LightSurface(LitSurface s, float3 lightDir) {
 }
 
 LitSurface GetLitSurfaceVertex(float3 normal, float3 position) {
-	return GetLitSurface(normal, position, 0, 1, 0, true);
+	return GetLitSurface(normal, position, 0, 1, 0, 0, true);
 }
 
 #endif // MYRP_LIGHTING_INCLUDED

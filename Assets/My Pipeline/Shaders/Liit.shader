@@ -6,6 +6,7 @@
 		_MainTex("Albedo & Alpha", 2D) = "white" {}
 		[KeywordEnum(Off, On, Shadows)] _Clipping("Alpha Clipping", Float) = 0
 		_Cutoff("Alpha Cutoff", Range(0, 1)) = 0.5
+		_Metallic("Metallic", Range(0, 1)) = 0
 		_Smoothness("Smoothness", Range(0, 1)) = 0.5
 		[Enum(UnityEngine.Rendering.CullMode)]_Cull("Cull", Float) = 2
 		[Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend("Src Blend", Float) = 1
@@ -27,7 +28,7 @@
 
 			#pragma target 3.5
 			#pragma multi_compile_instancing
-			#pragma instancing_options assumeuniformscaling
+			//#pragma instancing_options assumeuniformscaling
 			#pragma shader_feature _CLIPPING_ON
 			#pragma multi_compile _ _CASCADED_SHADOWS_HARD _CASCADED_SHADOWS_SOFT
 			#pragma multi_compile _ _SHADOWS_HARD
@@ -54,7 +55,7 @@
 			#pragma target 3.5
 
 			#pragma multi_compile_instancing
-			#pragma instancing_options assumeuniformscaling
+			//#pragma instancing_options assumeuniformscaling
 			#pragma shader_feature _CLIPPING_OFF
 			#pragma vertex ShadowCasterPassVertex
 			#pragma fragment ShadowCasterPassFragment
