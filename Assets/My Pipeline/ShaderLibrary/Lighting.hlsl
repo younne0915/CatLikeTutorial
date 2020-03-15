@@ -1,15 +1,17 @@
 ﻿#ifndef MYRP_LIGHTING_INCLUDED
 #define MYRP_LIGHTING_INCLUDED
 
-TEXTURECUBE(unity_SpecCube0);
-SAMPLER(samplerunity_SpecCube0);
-
 struct LitSurface {
 	float3 normal, position, viewDir;
 	float3 diffuse, specular;
 	float perceptualRoughness, roughness, fresnelStrength, reflectivity;
 	bool perfectDiffuser;
 };
+
+void PremultiplyAlpha(inout LitSurface s, inout float alpha) {
+	s.diffuse *= alpha;
+	alpha = lerp(alpha, 1, s.reflectivity);
+}
 
 //对环境颜色和高光反射进行差值，根据菲涅尔反射模型
 float3 ReflectEnvironment(LitSurface s, float3 environment) { 

@@ -13,6 +13,7 @@
 		[Enum(UnityEngine.Rendering.BlendMode)] _DstBlend("Dst Blend", Float) = 0
 		[Enum(Off, 0, On, 1)] _ZWrite("Z Write", Float) = 1
 		[Toggle(_RECEIVE_SHADOWS)] _ReceiveShadows("Receive Shadows", Float) = 1
+		[Toggle(_PREMULTIPLY_ALPHA)] _PremulAlpha("Premultiply Alpha", Float) = 0
     }
     SubShader
     {
@@ -33,6 +34,7 @@
 			#pragma multi_compile _ _CASCADED_SHADOWS_HARD _CASCADED_SHADOWS_SOFT
 			#pragma multi_compile _ _SHADOWS_HARD
 			#pragma multi_compile _ _SHADOWS_SOFT
+			#pragma multi_compile _ LIGHTMAP_ON
 			#pragma shader_feature _RECEIVE_SHADOWS
 
 			#pragma vertex LitPassVertex

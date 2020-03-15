@@ -4,6 +4,7 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Shadow/ShadowSamplingTent.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/ImageBasedLighting.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/EntityLighting.hlsl"
 #include "Lighting.hlsl"
 
 CBUFFER_START(UnityPerFrame)
@@ -17,7 +18,10 @@ float4 unity_LightIndicesOffsetAndCount;
 //受到影响的灯光的下标
 float4 unity_4LightIndices0, unity_4LightIndices1;
 float4 unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax;
-float4 unity_SpecCube0_ProbePosition;
+float4 unity_SpecCube0_ProbePosition, unity_SpecCube0_HDR;
+float4 unity_SpecCube1_BoxMin, unity_SpecCube1_BoxMax;
+float4 unity_SpecCube1_ProbePosition, unity_SpecCube1_HDR;
+float4 unity_LightmapST;
 CBUFFER_END
 
 #define MAX_VISIBLE_LIGHTS 16
@@ -57,11 +61,38 @@ TEXTURE2D(_MainTex);
 SAMPLER(sampler_MainTex);
 
 
+TEXTURECUBE(unity_SpecCube0);
+TEXTURECUBE(unity_SpecCube1);
+SAMPLER(samplerunity_SpecCube0);
+
+TEXTURE2D(unity_Lightmap);
+SAMPLER(samplerunity_Lightmap);
+
 CBUFFER_START(UnityPerMaterial)
 float4 _MainTex_ST;
 float _Cutoff;
 //float _Smoothness;
 CBUFFER_END
+
+
+//float3 SampleLightmap(float2 uv) {
+//	return SampleSingleLightmap(
+//		TEXTURE2D_PARAM(unity_Lightmap, samplerunity_Lightmap), uv
+//	);
+//}
+
+float3 SampleLightmap(float2 uv) {
+	return SampleSingleLightmap(
+		TEXTURE2D_PARAM(unity_Lightmap, samplerunity_Lightmap), uv,
+		float4(1, 1, 0, 0),
+#if defined(UNITY_LIGHTMAP_FULL_HDR)
+		false,
+#else
+		true,
+#endif
+		float4(LIGHTMAP_HDR_MULTIPLIER, LIGHTMAP_HDR_EXPONENT, 0.0, 0.0)
+	);
+}
 
 float3 BoxProjection(
 	float3 direction, float3 position,
@@ -92,7 +123,27 @@ float3 SampleEnvironment(LitSurface s) {
 	float4 sample = SAMPLE_TEXTURECUBE_LOD(
 		unity_SpecCube0, samplerunity_SpecCube0, uvw, mip
 	);
-	float3 color = sample.rgb;
+
+	//float3 color = sample.rgb;
+
+	float3 color = DecodeHDREnvironment(sample, unity_SpecCube0_HDR);
+
+	//如果w < 1，表示一个点受到多个probe影响
+	float blend = unity_SpecCube0_BoxMin.w;
+	if (blend < 0.99999) {
+		uvw = BoxProjection(
+			reflectVector, s.position,
+			unity_SpecCube1_ProbePosition,
+			unity_SpecCube1_BoxMin, unity_SpecCube1_BoxMax
+		);
+		sample = SAMPLE_TEXTURECUBE_LOD(
+			unity_SpecCube1, samplerunity_SpecCube0, uvw, mip
+		);
+		color = lerp(
+			DecodeHDREnvironment(sample, unity_SpecCube1_HDR), color, blend
+		);
+	}
+
 	return color;
 }
 
@@ -282,6 +333,7 @@ struct VertexInput {
 	float4 pos : POSITION;
 	float3 normal : NORMAL;
 	float2 uv : TEXCOORD0;
+	float2 lightmapUV : TEXCOORD1;
 	//声明一个instanceID，当GPU Instance可用时，获取该顶点对应的M 矩阵
 	UNITY_VERTEX_INPUT_INSTANCE_ID	//uint instanceID : SV_InstanceID;
 };
@@ -292,8 +344,18 @@ struct VertexOutput {
 	float3 worldPos : TEXCOORD1;
 	float3 vertexLighting : TEXCOORD2;
 	float2 uv : TEXCOORD3;
+#if defined(LIGHTMAP_ON)
+	float2 lightmapUV : TEXCOORD4;
+#endif
 	UNITY_VERTEX_INPUT_INSTANCE_ID
 };
+
+float3 GlobalIllumination(VertexOutput input) {
+#if defined(LIGHTMAP_ON)
+	return SampleLightmap(input.lightmapUV);
+#endif
+	return 0;
+}
 
 VertexOutput LitPassVertex(VertexInput input) {
 	VertexOutput output;
@@ -328,6 +390,10 @@ VertexOutput LitPassVertex(VertexInput input) {
 		output.vertexLighting += GenericLight(lightIndex, surface, 1);
 	}
 	output.uv = TRANSFORM_TEX(input.uv, _MainTex);
+#if defined(LIGHTMAP_ON)
+	output.lightmapUV =
+		input.lightmapUV * unity_LightmapST.xy + unity_LightmapST.zw;
+#endif
 	return output;
 }
 
@@ -358,6 +424,10 @@ float4 LitPassFragment(VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_F
 		UNITY_ACCESS_INSTANCED_PROP(PerInstance, _Smoothness)
 	);
 
+#if defined(_PREMULTIPLY_ALPHA)
+	PremultiplyAlpha(surface, albedoAlpha.a);
+#endif
+
 	//float3 diffuseLight = input.vertexLighting;
 	float3 color = input.vertexLighting * surface.diffuse;
 #if defined(_CASCADED_SHADOWS_HARD) || defined(_CASCADED_SHADOWS_SOFT)
@@ -381,6 +451,8 @@ float4 LitPassFragment(VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_F
 	//return float4(color, albedoAlpha.a); 
 
 	color += ReflectEnvironment(surface, SampleEnvironment(surface));
+	color = GlobalIllumination(input);
+
 	return float4(color, albedoAlpha.a);
 
 	/*float3 color = diffuseLight * albedo.rgb;
