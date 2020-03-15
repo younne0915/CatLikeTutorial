@@ -76,4 +76,9 @@ LitSurface GetLitSurfaceVertex(float3 normal, float3 position) {
 	return GetLitSurface(normal, position, 0, 1, 0, 0, true);
 }
 
+
+LitSurface GetLitSurfaceMeta(float3 color, float metallic, float smoothness) {
+	return GetLitSurface(0, 0, 0, color, metallic, smoothness);
+}
+
 #endif // MYRP_LIGHTING_INCLUDED

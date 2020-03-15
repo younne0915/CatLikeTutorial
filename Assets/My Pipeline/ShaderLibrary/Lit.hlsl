@@ -451,7 +451,9 @@ float4 LitPassFragment(VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_F
 	//return float4(color, albedoAlpha.a); 
 
 	color += ReflectEnvironment(surface, SampleEnvironment(surface));
-	color = GlobalIllumination(input);
+	//color = GlobalIllumination(input);
+	color += GlobalIllumination(input) * surface.diffuse;
+	//color += surface.diffuse;
 
 	return float4(color, albedoAlpha.a);
 

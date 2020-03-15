@@ -17,7 +17,6 @@
     }
     SubShader
     {
-        
         Pass
         {
 			Blend[_SrcBlend][_DstBlend]
@@ -63,6 +62,23 @@
 			#pragma fragment ShadowCasterPassFragment
 
 			#include "../ShaderLibrary/ShadowCaster.hlsl"
+
+			ENDHLSL
+		}
+
+		Pass {
+			Tags {
+				"LightMode" = "Meta"
+			}
+
+			Cull Off
+
+			HLSLPROGRAM
+
+			#pragma vertex MetaPassVertex
+			#pragma fragment MetaPassFragment
+
+			#include "../ShaderLibrary/Meta.hlsl"
 
 			ENDHLSL
 		}
