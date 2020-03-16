@@ -44,7 +44,7 @@ sysinfo.txt
 .DS_Store
 
 # generated
-/[pP]ackages/*
+#/[pP]ackages/*
 !/[pP]ackages/jp.co.happyelements*
 /Assets/MessagePack.Generated*
 !/Assets/MessagePack.Generated/RegisterResolver.cs*

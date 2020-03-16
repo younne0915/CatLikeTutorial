@@ -5,6 +5,7 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Shadow/ShadowSamplingTent.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/ImageBasedLighting.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/EntityLighting.hlsl"
+
 #include "Lighting.hlsl"
 
 CBUFFER_START(UnityPerFrame)
@@ -22,6 +23,9 @@ float4 unity_SpecCube0_ProbePosition, unity_SpecCube0_HDR;
 float4 unity_SpecCube1_BoxMin, unity_SpecCube1_BoxMax;
 float4 unity_SpecCube1_ProbePosition, unity_SpecCube1_HDR;
 float4 unity_LightmapST;
+float4 unity_SHAr, unity_SHAg, unity_SHAb;
+float4 unity_SHBr, unity_SHBg, unity_SHBb;
+float4 unity_SHC;
 CBUFFER_END
 
 #define MAX_VISIBLE_LIGHTS 16
@@ -75,11 +79,49 @@ float _Cutoff;
 CBUFFER_END
 
 
+#define UNITY_MATRIX_M unity_ObjectToWorld
+#define UNITY_MATRIX_I_M unity_WorldToObject
+
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/UnityInstancing.hlsl"
+
+
+//声明一个数组PerInstanceArray，里面存储float4, _Color
+UNITY_INSTANCING_BUFFER_START(PerInstance)
+UNITY_DEFINE_INSTANCED_PROP(float4, _Color)
+UNITY_DEFINE_INSTANCED_PROP(float, _Metallic)
+UNITY_DEFINE_INSTANCED_PROP(float, _Smoothness)
+UNITY_DEFINE_INSTANCED_PROP(float4, _EmissionColor)
+UNITY_INSTANCING_BUFFER_END(PerInstance)
+
+
+
+struct VertexInput {
+	float4 pos : POSITION;
+	float3 normal : NORMAL;
+	float2 uv : TEXCOORD0;
+	float2 lightmapUV : TEXCOORD1;
+	//声明一个instanceID，当GPU Instance可用时，获取该顶点对应的M 矩阵
+	UNITY_VERTEX_INPUT_INSTANCE_ID	//uint instanceID : SV_InstanceID;
+};
+
+struct VertexOutput {
+	float4 clipPos : SV_POSITION;
+	float3 normal : TEXCOORD0;
+	float3 worldPos : TEXCOORD1;
+	float3 vertexLighting : TEXCOORD2;
+	float2 uv : TEXCOORD3;
+#if defined(LIGHTMAP_ON)
+	float2 lightmapUV : TEXCOORD4;
+#endif
+	UNITY_VERTEX_INPUT_INSTANCE_ID
+};
+
 //float3 SampleLightmap(float2 uv) {
 //	return SampleSingleLightmap(
 //		TEXTURE2D_PARAM(unity_Lightmap, samplerunity_Lightmap), uv
 //	);
 //}
+
 
 float3 SampleLightmap(float2 uv) {
 	return SampleSingleLightmap(
@@ -315,47 +357,13 @@ float3 GenericLight(int index, LitSurface s, float shadowAttenuation) {
 	return color * lightColor;
 }
 
-#define UNITY_MATRIX_M unity_ObjectToWorld
-#define UNITY_MATRIX_I_M unity_WorldToObject
-
-#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/UnityInstancing.hlsl"
-
-//声明一个数组PerInstanceArray，里面存储float4, _Color
-UNITY_INSTANCING_BUFFER_START(PerInstance)
-UNITY_DEFINE_INSTANCED_PROP(float4, _Color)
-UNITY_DEFINE_INSTANCED_PROP(float, _Metallic)
-UNITY_DEFINE_INSTANCED_PROP(float, _Smoothness)
-UNITY_DEFINE_INSTANCED_PROP(float4, _EmissionColor)
-UNITY_INSTANCING_BUFFER_END(PerInstance)
-
-
-
-struct VertexInput {
-	float4 pos : POSITION;
-	float3 normal : NORMAL;
-	float2 uv : TEXCOORD0;
-	float2 lightmapUV : TEXCOORD1;
-	//声明一个instanceID，当GPU Instance可用时，获取该顶点对应的M 矩阵
-	UNITY_VERTEX_INPUT_INSTANCE_ID	//uint instanceID : SV_InstanceID;
-};
-
-struct VertexOutput {
-	float4 clipPos : SV_POSITION;
-	float3 normal : TEXCOORD0;
-	float3 worldPos : TEXCOORD1;
-	float3 vertexLighting : TEXCOORD2;
-	float2 uv : TEXCOORD3;
-#if defined(LIGHTMAP_ON)
-	float2 lightmapUV : TEXCOORD4;
-#endif
-	UNITY_VERTEX_INPUT_INSTANCE_ID
-};
-
-float3 GlobalIllumination(VertexOutput input) {
+float3 GlobalIllumination(VertexOutput input, LitSurface surface) {
 #if defined(LIGHTMAP_ON)
 	return SampleLightmap(input.lightmapUV);
+#else
+	return SampleLightProbes(surface);
 #endif
-	return 0;
+	//return 0;
 }
 
 VertexOutput LitPassVertex(VertexInput input) {
@@ -452,13 +460,25 @@ float4 LitPassFragment(VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_F
 	//return float4(color, albedoAlpha.a); 
 
 	color += ReflectEnvironment(surface, SampleEnvironment(surface));
-	color += GlobalIllumination(input) * surface.diffuse;
+	color += GlobalIllumination(input, surface) * surface.diffuse;
 	color += UNITY_ACCESS_INSTANCED_PROP(PerInstance, _EmissionColor).rgb;
 
 	return float4(color, albedoAlpha.a);
 
 	/*float3 color = diffuseLight * albedo.rgb;
 	return float4(color, 1);*/
+}
+
+float3 SampleLightProbes(LitSurface s) {
+	float4 coefficients[7];
+	coefficients[0] = unity_SHAr;
+	coefficients[1] = unity_SHAg;
+	coefficients[2] = unity_SHAb;
+	coefficients[3] = unity_SHBr;
+	coefficients[4] = unity_SHBg;
+	coefficients[5] = unity_SHBb;
+	coefficients[6] = unity_SHC;
+	return max(0.0, SampleSH9(coefficients, s.normal));
 }
 
 #endif // MYRP_LIT_INCLUDED
