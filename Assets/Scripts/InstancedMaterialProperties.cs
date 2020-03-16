@@ -6,9 +6,13 @@ public class InstancedMaterialProperties : MonoBehaviour
     static int colorID = Shader.PropertyToID("_Color");
     static int metallicId = Shader.PropertyToID("_Metallic");
     static int smoothnessId = Shader.PropertyToID("_Smoothness");
+    static int emissionColorId = Shader.PropertyToID("_EmissionColor");
 
     [SerializeField]
     Color color = Color.white;
+
+    [SerializeField, ColorUsage(false, true)]
+    Color emissionColor = Color.black;
 
     [SerializeField, Range(0f, 1f)]
     float metallic;
@@ -27,6 +31,7 @@ public class InstancedMaterialProperties : MonoBehaviour
         {
             propertyBlock = new MaterialPropertyBlock();
         }
+        propertyBlock.SetColor(emissionColorId, emissionColor);
         propertyBlock.SetColor(colorID, color);
         propertyBlock.SetFloat(metallicId, metallic);
         propertyBlock.SetFloat(smoothnessId, smoothness);

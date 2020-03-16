@@ -219,6 +219,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 0.9622641, g: 0.18512243, b: 0.068084694, a: 1}
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
 --- !u!1 &107159005
@@ -429,6 +430,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 0.88497895, g: 1, b: 0.042452782, a: 1}
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
 --- !u!1 &226837026
@@ -536,6 +538,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 0.88497895, g: 1, b: 0.042452782, a: 1}
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
 --- !u!1 &277985282
@@ -644,6 +647,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 1, g: 0.9990903, b: 0.02352941, a: 1}
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0.159
   smoothness: 0.674
 --- !u!1 &282202186
@@ -751,6 +755,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 0.8381468, g: 0.9433962, b: 0.057849772, a: 1}
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
 --- !u!1 &298087238
@@ -858,6 +863,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 0.9622641, g: 0.18512243, b: 0.068084694, a: 1}
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
 --- !u!1 &341877599
@@ -893,8 +899,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 1, g: 0.25, b: 0.25, a: 1}
-  metallic: 0
-  smoothness: 0.082
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
+  metallic: 1
+  smoothness: 0
 --- !u!135 &341877601
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -925,7 +932,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 9bc225b92bee8f048963a1db6da10207, type: 2}
+  - {fileID: 2100000, guid: 31813ac79ec981a4cb1ba05ccd423840, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1167,6 +1174,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 0.88497895, g: 1, b: 0.042452782, a: 1}
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
 --- !u!1 &758777694
@@ -1274,6 +1282,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 0.04313723, g: 1, b: 0.3657956, a: 1}
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
 --- !u!1 &1061637237
@@ -1294,7 +1303,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!65 &1061637238
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1461,6 +1470,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 0.3972944, g: 0.9056604, b: 0.48963928, a: 1}
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
 --- !u!65 &1241327716
@@ -1626,6 +1636,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 0.88497895, g: 1, b: 0.042452782, a: 1}
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
 --- !u!1 &1487588953
@@ -1802,6 +1813,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 0.12407819, g: 0.04313723, b: 1, a: 1}
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
 --- !u!1 &1676936606
@@ -1909,6 +1921,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 0.12407819, g: 0.04313723, b: 1, a: 1}
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
 --- !u!1 &1705523223
@@ -2016,6 +2029,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 0.9622641, g: 0.18512243, b: 0.068084694, a: 1}
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
 --- !u!1 &1708517165
@@ -2123,6 +2137,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 0.8381468, g: 0.9433962, b: 0.057849772, a: 1}
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
 --- !u!1 &1758450204
@@ -2230,6 +2245,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 0.9622641, g: 0.18512243, b: 0.068084694, a: 1}
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
 --- !u!1 &1783296761
@@ -2337,6 +2353,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 0.3476326, g: 0.7494036, b: 0.7924528, a: 1}
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
 --- !u!1 &1803717583
@@ -2444,6 +2461,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 0.04313723, g: 1, b: 0.3657956, a: 1}
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
 --- !u!1 &1894385849
@@ -2689,5 +2707,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 0.12407819, g: 0.04313723, b: 1, a: 1}
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5

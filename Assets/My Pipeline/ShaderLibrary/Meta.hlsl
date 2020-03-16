@@ -22,6 +22,7 @@ CBUFFER_END
 CBUFFER_START(UnityMetaPass)
 float unity_OneOverOutputBoost;
 float unity_MaxOutputValue;
+bool4 unity_MetaFragmentControl;
 CBUFFER_END
 
 TEXTURE2D(_MainTex);
@@ -56,10 +57,14 @@ float4 MetaPassFragment(VertexOutput input) : SV_TARGET{
 		albedoAlpha.rgb, _Metallic, _Smoothness
 	);
 	float4 meta = 0;
-	meta = float4(surface.diffuse, 1);
-	meta.rgb = clamp(
-		PositivePow(meta.rgb, unity_OneOverOutputBoost), 0, unity_MaxOutputValue
-	);
+	if (unity_MetaFragmentControl.x) {
+		meta = float4(surface.diffuse, 1);
+		//meta.rgb += surface.specular * surface.roughness * 0.5;
+		meta.rgb = clamp(
+			PositivePow(meta.rgb, unity_OneOverOutputBoost),
+			0, unity_MaxOutputValue
+		);
+	}
 	return meta;
 }
 
