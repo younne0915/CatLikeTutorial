@@ -54,6 +54,16 @@ CBUFFER_START(UnityPerCamera)
 float3 _WorldSpaceCameraPos;
 CBUFFER_END
 
+CBUFFER_START(UnityProbeVolume)
+float4 unity_ProbeVolumeParams;
+float4x4 unity_ProbeVolumeWorldToObject;
+float3 unity_ProbeVolumeSizeInv;
+float3 unity_ProbeVolumeMin;
+CBUFFER_END
+
+TEXTURE3D_FLOAT(unity_ProbeVolumeSH);
+SAMPLER(samplerunity_ProbeVolumeSH);
+
 TEXTURE2D_SHADOW(_ShadowMap);
 SAMPLER_CMP(sampler_ShadowMap);
 
@@ -227,6 +237,27 @@ float HardShadowAttenuation(float4 shadowPos, bool cascade = false) {
 //	return attenuation;
 //}
 
+float3 SampleLightProbes(LitSurface s) {
+	if (unity_ProbeVolumeParams.x) {
+		return SampleProbeVolumeSH4(
+			TEXTURE3D_PARAM(unity_ProbeVolumeSH, samplerunity_ProbeVolumeSH),
+			s.position, s.normal, unity_ProbeVolumeWorldToObject,
+			unity_ProbeVolumeParams.y, unity_ProbeVolumeParams.z,
+			unity_ProbeVolumeMin, unity_ProbeVolumeSizeInv
+		);
+	}
+	else {
+		float4 coefficients[7];
+		coefficients[0] = unity_SHAr;
+		coefficients[1] = unity_SHAg;
+		coefficients[2] = unity_SHAb;
+		coefficients[3] = unity_SHBr;
+		coefficients[4] = unity_SHBg;
+		coefficients[5] = unity_SHBb;
+		coefficients[6] = unity_SHC;
+		return max(0.0, SampleSH9(coefficients, s.normal));
+	}
+}
 
 float SoftShadowAttenuation(float4 shadowPos, bool cascade = false) {
 	real tentWeights[9];
@@ -467,18 +498,6 @@ float4 LitPassFragment(VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_F
 
 	/*float3 color = diffuseLight * albedo.rgb;
 	return float4(color, 1);*/
-}
-
-float3 SampleLightProbes(LitSurface s) {
-	float4 coefficients[7];
-	coefficients[0] = unity_SHAr;
-	coefficients[1] = unity_SHAg;
-	coefficients[2] = unity_SHAb;
-	coefficients[3] = unity_SHBr;
-	coefficients[4] = unity_SHBg;
-	coefficients[5] = unity_SHBb;
-	coefficients[6] = unity_SHC;
-	return max(0.0, SampleSH9(coefficients, s.normal));
 }
 
 #endif // MYRP_LIT_INCLUDED

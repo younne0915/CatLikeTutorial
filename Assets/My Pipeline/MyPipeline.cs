@@ -522,7 +522,8 @@ public class MyPipeline : RenderPipeline
         drawSettings.rendererConfiguration |=
             RendererConfiguration.PerObjectReflectionProbes |
             RendererConfiguration.PerObjectLightmaps |
-            RendererConfiguration.PerObjectLightProbe;
+            RendererConfiguration.PerObjectLightProbe |
+            RendererConfiguration.PerObjectLightProbeProxyVolume;
 
         drawSettings.sorting.flags = SortFlags.CommonOpaque;
 
