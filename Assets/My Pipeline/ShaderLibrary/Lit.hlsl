@@ -22,7 +22,7 @@ float4 unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax;
 float4 unity_SpecCube0_ProbePosition, unity_SpecCube0_HDR;
 float4 unity_SpecCube1_BoxMin, unity_SpecCube1_BoxMax;
 float4 unity_SpecCube1_ProbePosition, unity_SpecCube1_HDR;
-float4 unity_LightmapST;
+float4 unity_LightmapST, unity_DynamicLightmapST;
 float4 unity_SHAr, unity_SHAg, unity_SHAb;
 float4 unity_SHBr, unity_SHBg, unity_SHBb;
 float4 unity_SHC;
@@ -82,6 +82,9 @@ SAMPLER(samplerunity_SpecCube0);
 TEXTURE2D(unity_Lightmap);
 SAMPLER(samplerunity_Lightmap);
 
+TEXTURE2D(unity_DynamicLightmap);
+SAMPLER(samplerunity_DynamicLightmap);
+
 CBUFFER_START(UnityPerMaterial)
 float4 _MainTex_ST;
 float _Cutoff;
@@ -110,6 +113,7 @@ struct VertexInput {
 	float3 normal : NORMAL;
 	float2 uv : TEXCOORD0;
 	float2 lightmapUV : TEXCOORD1;
+	float2 dynamicLightmapUV : TEXCOORD2;
 	//声明一个instanceID，当GPU Instance可用时，获取该顶点对应的M 矩阵
 	UNITY_VERTEX_INPUT_INSTANCE_ID	//uint instanceID : SV_InstanceID;
 };
@@ -122,6 +126,9 @@ struct VertexOutput {
 	float2 uv : TEXCOORD3;
 #if defined(LIGHTMAP_ON)
 	float2 lightmapUV : TEXCOORD4;
+#endif
+#if defined(DYNAMICLIGHTMAP_ON)
+	float2 dynamicLightmapUV : TEXCOORD5;
 #endif
 	UNITY_VERTEX_INPUT_INSTANCE_ID
 };
@@ -142,6 +149,15 @@ float3 SampleLightmap(float2 uv) {
 #else
 		true,
 #endif
+		float4(LIGHTMAP_HDR_MULTIPLIER, LIGHTMAP_HDR_EXPONENT, 0.0, 0.0)
+	);
+}
+
+
+float3 SampleDynamicLightmap(float2 uv) {
+	return SampleSingleLightmap(
+		TEXTURE2D_PARAM(unity_DynamicLightmap, samplerunity_DynamicLightmap), uv,
+		float4(1, 1, 0, 0), false,
 		float4(LIGHTMAP_HDR_MULTIPLIER, LIGHTMAP_HDR_EXPONENT, 0.0, 0.0)
 	);
 }
@@ -238,6 +254,7 @@ float HardShadowAttenuation(float4 shadowPos, bool cascade = false) {
 //}
 
 float3 SampleLightProbes(LitSurface s) {
+	//如果该物体是有LPPV，那么就采样LPPV
 	if (unity_ProbeVolumeParams.x) {
 		return SampleProbeVolumeSH4(
 			TEXTURE3D_PARAM(unity_ProbeVolumeSH, samplerunity_ProbeVolumeSH),
@@ -390,11 +407,16 @@ float3 GenericLight(int index, LitSurface s, float shadowAttenuation) {
 
 float3 GlobalIllumination(VertexOutput input, LitSurface surface) {
 #if defined(LIGHTMAP_ON)
-	return SampleLightmap(input.lightmapUV);
+	float3 gi = SampleLightmap(input.lightmapUV);
+#if defined(DYNAMICLIGHTMAP_ON)
+	gi += SampleDynamicLightmap(input.dynamicLightmapUV);
+#endif
+	return gi;
+#elif defined(DYNAMICLIGHTMAP_ON)
+	return SampleDynamicLightmap(input.dynamicLightmapUV);
 #else
 	return SampleLightProbes(surface);
 #endif
-	//return 0;
 }
 
 VertexOutput LitPassVertex(VertexInput input) {
@@ -434,6 +456,13 @@ VertexOutput LitPassVertex(VertexInput input) {
 	output.lightmapUV =
 		input.lightmapUV * unity_LightmapST.xy + unity_LightmapST.zw;
 #endif
+
+#if defined(DYNAMICLIGHTMAP_ON)
+	output.dynamicLightmapUV =
+		input.dynamicLightmapUV * unity_DynamicLightmapST.xy +
+		unity_DynamicLightmapST.zw;
+#endif
+
 	return output;
 }
 

@@ -22,7 +22,7 @@ CBUFFER_END
 CBUFFER_START(UnityMetaPass)
 float unity_OneOverOutputBoost;
 float unity_MaxOutputValue;
-bool4 unity_MetaFragmentControl, unity_MetaVertexControl;
+bool4 unity_MetaVertexControl, unity_MetaFragmentControl;
 CBUFFER_END
 
 TEXTURE2D(_MainTex);
@@ -40,6 +40,7 @@ struct VertexOutput {
 	float2 uv : TEXCOORD0;
 };
 
+//mul(unity_MatrixVP, float4(input.pos.xyz, 1.0));为什么input.pos表示世界坐标？
 VertexOutput MetaPassVertex(VertexInput input) {
 	VertexOutput output;
 	if (unity_MetaVertexControl.x) {

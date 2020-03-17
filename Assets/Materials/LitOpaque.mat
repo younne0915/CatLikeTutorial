@@ -10,7 +10,7 @@ Material:
   m_Name: LitOpaque
   m_Shader: {fileID: 4800000, guid: 5ede6b5156f8f1742af160b7201d16c6, type: 3}
   m_ShaderKeywords: _PREMULTIPLY_ALPHA _RECEIVE_SHADOWS
-  m_LightmapFlags: 0
+  m_LightmapFlags: 1
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: 2000
