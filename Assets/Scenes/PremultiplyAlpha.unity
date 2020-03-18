@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.17619297, g: 0.22051144, b: 0.30283713, a: 1}
+  m_IndirectSpecularColor: {r: 0.17619276, g: 0.22051111, b: 0.30283657, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -52,7 +52,7 @@ LightmapSettings:
     m_AlbedoBoost: 1
     m_EnvironmentLightingMode: 0
     m_EnableBakedLightmaps: 1
-    m_EnableRealtimeLightmaps: 0
+    m_EnableRealtimeLightmaps: 1
   m_LightmapEditorSettings:
     serializedVersion: 10
     m_Resolution: 2
@@ -651,8 +651,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   color: {r: 1, g: 1, b: 1, a: 1}
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
-  metallic: 0.159
-  smoothness: 0.674
+  metallic: 0
+  smoothness: 0.5
   pulseEmissionFreqency: 0
 --- !u!1 &282202186
 GameObject:
@@ -1090,6 +1090,7 @@ GameObject:
   - component: {fileID: 612131380}
   - component: {fileID: 612131379}
   - component: {fileID: 612131383}
+  - component: {fileID: 612131384}
   m_Layer: 0
   m_Name: Cube (2)
   m_TagString: Untagged
@@ -1188,6 +1189,23 @@ LightProbeProxyVolume:
   m_ProbePositionMode: 0
   m_RefreshMode: 0
   m_QualityMode: 1
+--- !u!114 &612131384
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 612131378}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba62cf4785ac9b34cacc274919952abd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  color: {r: 1, g: 1, b: 1, a: 1}
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
+  metallic: 0
+  smoothness: 0.5
+  pulseEmissionFreqency: 0
 --- !u!1 &724680662
 GameObject:
   m_ObjectHideFlags: 0
@@ -1329,10 +1347,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba62cf4785ac9b34cacc274919952abd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  color: {r: 0.8783784, g: 1, b: 0.75, a: 1}
-  emissionColor: {r: 0.74391353, g: 1, b: 0.5990566, a: 1}
-  metallic: 0
-  smoothness: 0.5
+  color: {r: 0.7683248, g: 0.9339623, b: 0.6740388, a: 1}
+  emissionColor: {r: 0.513863, g: 0.6792453, b: 0.41972235, a: 1}
+  metallic: 0.052
+  smoothness: 0.463
   pulseEmissionFreqency: 0.3
 --- !u!65 &742896900
 BoxCollider:
@@ -1778,7 +1796,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 1, g: 1, b: 1, a: 1}
-  emissionColor: {r: 0.8207547, g: 0.7239676, b: 0.7239676, a: 1}
+  emissionColor: {r: 0.6037736, g: 0.4756141, b: 0.4756141, a: 1}
   metallic: 0
   smoothness: 0.5
   pulseEmissionFreqency: 0
@@ -1794,6 +1812,7 @@ GameObject:
   - component: {fileID: 1185612264}
   - component: {fileID: 1185612263}
   - component: {fileID: 1185612262}
+  - component: {fileID: 1185612266}
   m_Layer: 0
   m_Name: Cube (3)
   m_TagString: Untagged
@@ -1874,6 +1893,23 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 9
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1185612266
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1185612261}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba62cf4785ac9b34cacc274919952abd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  color: {r: 0.9811321, g: 0.9811321, b: 0.9811321, a: 1}
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
+  metallic: 0
+  smoothness: 0.5
+  pulseEmissionFreqency: 0
 --- !u!1 &1228060004
 GameObject:
   m_ObjectHideFlags: 0
@@ -2155,7 +2191,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1487588954
 Transform:
   m_ObjectHideFlags: 0
@@ -3012,8 +3048,8 @@ Light:
   m_Enabled: 1
   serializedVersion: 8
   m_Type: 1
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 0.1
+  m_Color: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
+  m_Intensity: 1
   m_Range: 10
   m_SpotAngle: 30
   m_CookieSize: 10
@@ -3032,7 +3068,7 @@ Light:
   m_CullingMask:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_Lightmapping: 1
+  m_Lightmapping: 4
   m_LightShadowCasterMode: 0
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 1
@@ -3056,7 +3092,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1965461710
 Transform:
   m_ObjectHideFlags: 0
@@ -3082,7 +3118,7 @@ Light:
   serializedVersion: 8
   m_Type: 0
   m_Color: {r: 0.2775454, g: 0.49740162, b: 0.764151, a: 1}
-  m_Intensity: 100
+  m_Intensity: 1
   m_Range: 17.48
   m_SpotAngle: 111.7
   m_CookieSize: 10

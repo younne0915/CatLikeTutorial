@@ -43,6 +43,9 @@ public class MyPipelineAsset : RenderPipelineAsset
     [SerializeField, HideInInspector]
     Vector3 fourCascadesSplit = new Vector3(0.067f, 0.2f, 0.467f);
 
+    [SerializeField, Range(0.01f, 2f)]
+    float shadowFadeRange = 1f;
+
     /// <summary>
     /// 每次改变MyPipelineAsset的值，InternalCreatePipeline就会被调用
     /// 当动态batch和GPU instancing都可用的时候，Unity优先使用GPU instancing
@@ -53,7 +56,8 @@ public class MyPipelineAsset : RenderPipelineAsset
         //Debug.LogErrorFormat("InternalCreatePipeline dynamicBatching = {0}", dynamicBatching);
         Vector3 shadowCascadeSplit = shadowCascades == ShadowCascades.Four ?
             fourCascadesSplit : new Vector3(twoCascadesSplit, 0f);
-        return new MyPipeline(dynamicBatching, instancing, (int)shadowMapSize, shadowDistance,
+        return new MyPipeline(dynamicBatching, instancing, (int)shadowMapSize,
+            shadowDistance, shadowFadeRange,
             (int)shadowCascades, shadowCascadeSplit);
     }
 }

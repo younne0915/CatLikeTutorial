@@ -220,10 +220,21 @@ float InsideCascadeCullingSphere(int index, float3 worldPos) {
 	return dot(worldPos - s.xyz, worldPos - s.xyz) < s.w;
 }
 
-float DistanceToCameraSqr(float3 worldPos) {
-	float3 cameraToFragment = worldPos - _WorldSpaceCameraPos;
-	return dot(cameraToFragment, cameraToFragment);
+//float DistanceToCameraSqr(float3 worldPos) {
+//	float3 cameraToFragment = worldPos - _WorldSpaceCameraPos;
+//	return dot(cameraToFragment, cameraToFragment);
+//}
+
+float RealtimeToBakedShadowsInterpolator(float3 worldPos) {
+	float d = distance(worldPos, _WorldSpaceCameraPos);
+	return saturate(d * _GlobalShadowData.y + _GlobalShadowData.z);
 }
+
+bool SkipRealtimeShadows(float3 worldPos) {
+	return RealtimeToBakedShadowsInterpolator(worldPos) >= 1.0;
+}
+
+
 
 float HardShadowAttenuation(float4 shadowPos, bool cascade = false) {
 	if (cascade) {
@@ -300,8 +311,8 @@ float ShadowAttenuation(int index, float3 worldPos)
 	return 1.0;
 #endif
 
-	if (_ShadowData[index].x <= 0 ||
-		DistanceToCameraSqr(worldPos) > _GlobalShadowData.y) {//判断顶点到摄像机的距离如果大于阴影距离，则说明点不在阴影范围内
+	if (_ShadowData[index].x <= 0 || SkipRealtimeShadows(worldPos)){
+		//DistanceToCameraSqr(worldPos) > _GlobalShadowData.y) {//判断顶点到摄像机的距离如果大于阴影距离，则说明点不在阴影范围内
 		return 1.0;
 	}
 	float4 shadowPos = mul(_WorldToShadowMatrices[index], float4(worldPos, 1.0));
@@ -339,7 +350,8 @@ float CascadedShadowAttenuation(float3 worldPos) {
 	return 1.0;
 #endif
 
-	if (DistanceToCameraSqr(worldPos) > _GlobalShadowData.y) {
+	//if (DistanceToCameraSqr(worldPos) > _GlobalShadowData.y) {
+	if (SkipRealtimeShadows(worldPos)) {
 		return 1.0;
 	}
 
@@ -408,15 +420,30 @@ float3 GenericLight(int index, LitSurface s, float shadowAttenuation) {
 float3 GlobalIllumination(VertexOutput input, LitSurface surface) {
 #if defined(LIGHTMAP_ON)
 	float3 gi = SampleLightmap(input.lightmapUV);
+	if (gi.x > 0.1) 
+	{
+		return float3(1,0,0);
+	}
+	else if (gi.y > 0.1) {
+		return float3(0, 1, 0);
+	}
+	else if (gi.z > 0.1) {
+		return float3(0, 0, 1);
+	}
 #if defined(DYNAMICLIGHTMAP_ON)
 	gi += SampleDynamicLightmap(input.dynamicLightmapUV);
+	return float3(1, 1, 1);
+
 #endif
 	return gi;
 #elif defined(DYNAMICLIGHTMAP_ON)//动态贴图开启，是通过Lighting Settings里Realtime Lighting-Realtime Global Illumination选中开启的，是对于静态物体而言
+	//return float3(1, 1, 1);
 	return SampleDynamicLightmap(input.dynamicLightmapUV);
 #else
-	//动态物体是通过LightProbes采集周围间接光颜色
 	//return float3(0, 1,0);
+	//return 1;
+
+		//动态物体是通过LightProbes采集周围间接光颜色
 	return SampleLightProbes(surface);
 #endif
 }
@@ -525,6 +552,9 @@ float4 LitPassFragment(VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_F
 	color += GlobalIllumination(input, surface) * surface.diffuse;
 	color += UNITY_ACCESS_INSTANCED_PROP(PerInstance, _EmissionColor).rgb;
 
+	//color = UNITY_ACCESS_INSTANCED_PROP(PerInstance, _EmissionColor).rgb;
+
+	//color = albedoAlpha;
 	return float4(color, albedoAlpha.a);
 
 	/*float3 color = diffuseLight * albedo.rgb;

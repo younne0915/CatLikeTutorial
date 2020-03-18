@@ -62,7 +62,7 @@ VertexOutput MetaPassVertex(VertexInput input) {
 float4 MetaPassFragment(VertexOutput input) : SV_TARGET{
 	float4 albedoAlpha = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv);
 	albedoAlpha *= _Color;
-	albedoAlpha.rgb *= albedoAlpha.a;
+	//albedoAlpha.rgb *= albedoAlpha.a;
 	LitSurface surface = GetLitSurfaceMeta(
 		albedoAlpha.rgb, _Metallic, _Smoothness
 	);
