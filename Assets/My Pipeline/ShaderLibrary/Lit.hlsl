@@ -412,9 +412,11 @@ float3 GlobalIllumination(VertexOutput input, LitSurface surface) {
 	gi += SampleDynamicLightmap(input.dynamicLightmapUV);
 #endif
 	return gi;
-#elif defined(DYNAMICLIGHTMAP_ON)
+#elif defined(DYNAMICLIGHTMAP_ON)//动态贴图开启，是通过Lighting Settings里Realtime Lighting-Realtime Global Illumination选中开启的，是对于静态物体而言
 	return SampleDynamicLightmap(input.dynamicLightmapUV);
 #else
+	//动态物体是通过LightProbes采集周围间接光颜色
+	//return float3(0, 1,0);
 	return SampleLightProbes(surface);
 #endif
 }

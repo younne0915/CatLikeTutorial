@@ -20,9 +20,26 @@ public class InstancedMaterialProperties : MonoBehaviour
     [SerializeField, Range(0f, 1f)]
     float smoothness = 0.5f;
 
+    [SerializeField]
+    float pulseEmissionFreqency;
+
     void Awake()
     {
-        OnValidate(); 
+        OnValidate();
+        if (pulseEmissionFreqency <= 0f)
+        {
+            enabled = false;
+        }
+    }
+
+    void Update()
+    {
+        Color originalEmissionColor = emissionColor;
+        emissionColor *= 0.5f +
+            0.5f * Mathf.Cos(2f * Mathf.PI * pulseEmissionFreqency * Time.time);
+        OnValidate();
+        DynamicGI.SetEmissive(GetComponent<MeshRenderer>(), emissionColor);
+        emissionColor = originalEmissionColor;
     }
 
     void OnValidate()

@@ -40,6 +40,7 @@ struct VertexOutput {
 	float2 uv : TEXCOORD0;
 };
 
+
 //mul(unity_MatrixVP, float4(input.pos.xyz, 1.0));为什么input.pos表示世界坐标？
 VertexOutput MetaPassVertex(VertexInput input) {
 	VertexOutput output;
@@ -66,20 +67,21 @@ float4 MetaPassFragment(VertexOutput input) : SV_TARGET{
 		albedoAlpha.rgb, _Metallic, _Smoothness
 	);
 
-	//float4 meta = 0;
-	//if (unity_MetaFragmentControl.x) {
-	//	meta = float4(surface.diffuse, 1);
-	//	meta.rgb += surface.specular * surface.roughness * 0.5;
-	//	meta.rgb = clamp(
-	//		PositivePow(meta.rgb, unity_OneOverOutputBoost),
-	//		0,unity_MaxOutputValue
-	//	);
-	//}
-	//if (unity_MetaFragmentControl.y) {
-	//	meta = float4(_EmissionColor.rgb * albedoAlpha.a, 1);
-	//}
+	float4 meta = 0;
+	if (unity_MetaFragmentControl.x) {
+		meta = float4(surface.diffuse, 1);
+		meta.rgb += surface.specular * surface.roughness * 0.5;
+		meta.rgb = clamp(
+			PositivePow(meta.rgb, unity_OneOverOutputBoost),
+			0,unity_MaxOutputValue
+		);
+	}
+	if (unity_MetaFragmentControl.y) {
+		meta = float4(_EmissionColor.rgb * albedoAlpha.a, 1);
+	}
 
-	float4 meta = 1;
+	//这个pass只对静态物体有作用，meta = 1会使得次物体周围间接光变为1
+	//float4 meta = 1;
 	return meta;
 }
 
