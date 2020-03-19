@@ -36,6 +36,7 @@
 			#pragma multi_compile _ _SHADOWS_SOFT
 			#pragma multi_compile _ LIGHTMAP_ON
 			#pragma multi_compile _ DYNAMICLIGHTMAP_ON
+			#pragma multi_compile _ _SHADOWMASK
 			#pragma shader_feature _RECEIVE_SHADOWS
 
 			#pragma vertex LitPassVertex

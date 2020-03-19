@@ -85,6 +85,9 @@ SAMPLER(samplerunity_Lightmap);
 TEXTURE2D(unity_DynamicLightmap);
 SAMPLER(samplerunity_DynamicLightmap);
 
+TEXTURE2D(unity_ShadowMask);
+SAMPLER(samplerunity_ShadowMask);
+
 CBUFFER_START(UnityPerMaterial)
 float4 _MainTex_ST;
 float _Cutoff;
@@ -457,6 +460,21 @@ float3 GlobalIllumination(VertexOutput input, LitSurface surface) {
 #endif
 }
 
+float4 BakedShadows(VertexOutput input, LitSurface surface) {
+#if defined(LIGHTMAP_ON)
+#if defined(_SHADOWMASK)
+	return SAMPLE_TEXTURE2D(
+		unity_ShadowMask, samplerunity_ShadowMask, input.lightmapUV
+	);
+#endif
+#else
+#endif
+
+	return float4(0,1,0,1);
+
+	return 1.0;
+}
+
 VertexOutput LitPassVertex(VertexInput input) {
 	VertexOutput output;
 
@@ -570,6 +588,7 @@ float4 LitPassFragment(VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_F
 	//color = UNITY_ACCESS_INSTANCED_PROP(PerInstance, _EmissionColor).rgb;
 
 	//color = albedoAlpha;
+	color = BakedShadows(input, surface);
 	return float4(color, albedoAlpha.a);
 
 	/*float3 color = diffuseLight * albedo.rgb;

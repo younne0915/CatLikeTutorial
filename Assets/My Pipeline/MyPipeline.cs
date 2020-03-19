@@ -48,6 +48,7 @@ public class MyPipeline : RenderPipeline
     const string cascadedShadowsHardKeyword = "_CASCADED_SHADOWS_HARD";
     const string cascadedShadowsSoftKeyword = "_CASCADED_SHADOWS_SOFT";
     const string clippingKeyword = "_CLIPPING";
+    const string shadowmaskKeyword = "_SHADOWMASK";
 
     RenderTexture shadowMap, cascadedShadowMap;
 
@@ -634,6 +635,7 @@ public class MyPipeline : RenderPipeline
     void ConfigureLights()
     {
         mainLightExists = false;
+        bool shadowmaskExists = false;
         shadowTileCount = 0;
         for (int i = 0; i < cull.visibleLights.Count; i++)
         {
@@ -648,6 +650,13 @@ public class MyPipeline : RenderPipeline
             Vector4 attenuation = Vector4.zero;
             attenuation.w = 1f;
             Vector4 shadow = Vector4.zero;
+
+            LightBakingOutput baking = light.light.bakingOutput;
+            if (baking.lightmapBakeType == LightmapBakeType.Mixed)
+            {
+                shadowmaskExists |=
+                    baking.mixedLightingMode == MixedLightingMode.Shadowmask;
+            }
 
             if (light.lightType == LightType.Directional)
             {
@@ -704,6 +713,7 @@ public class MyPipeline : RenderPipeline
             visibleLightAttenuations[i] = attenuation;
             shadowData[i] = shadow;
         }
+        CoreUtils.SetKeyword(cameraBuffer, shadowmaskKeyword, shadowmaskExists);
 
         //如果超过maxVisibleLights数量的灯光，该脚本不会传输给Shader
         //但是Unity自身可能会对超出maxVisibleLights的灯光，进行unity_4LightIndices0赋值，下标会找不到，_VisibleLightColors越界
