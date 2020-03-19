@@ -230,6 +230,13 @@ float RealtimeToBakedShadowsInterpolator(float3 worldPos) {
 	return saturate(d * _GlobalShadowData.y + _GlobalShadowData.z);
 }
 
+float MixRealtimeAndBakedShadowAttenuation(float realtime, float3 worldPos) {
+	float t = RealtimeToBakedShadowsInterpolator(worldPos);
+	//float fadedRealtime = lerp(realtime, 1, t);
+	float fadedRealtime = saturate(realtime + t);
+	return fadedRealtime;
+}
+
 bool SkipRealtimeShadows(float3 worldPos) {
 	return RealtimeToBakedShadowsInterpolator(worldPos) >= 1.0;
 }
@@ -381,8 +388,8 @@ float CascadedShadowAttenuation(float3 worldPos) {
 
 
 //float3 MainLight(float3 normal, float3 worldPos) {
-float3 MainLight(LitSurface s) {
-	float shadowAttenuation = CascadedShadowAttenuation(s.position);
+float3 MainLight(LitSurface s, float shadowAttenuation) {
+	//float shadowAttenuation = CascadedShadowAttenuation(s.position);
 	float3 lightColor = _VisibleLightColors[0].rgb;
 	float3 lightDirection = _VisibleLightDirectionsOrPositions[0].xyz;
 	//float diffuse = saturate(dot(normal, lightDirection));
@@ -418,32 +425,34 @@ float3 GenericLight(int index, LitSurface s, float shadowAttenuation) {
 }
 
 float3 GlobalIllumination(VertexOutput input, LitSurface surface) {
+	//return SampleLightProbes(surface);
+
 #if defined(LIGHTMAP_ON)
 	float3 gi = SampleLightmap(input.lightmapUV);
-	if (gi.x > 0.1) 
-	{
-		return float3(1,0,0);
-	}
-	else if (gi.y > 0.1) {
-		return float3(0, 1, 0);
-	}
-	else if (gi.z > 0.1) {
-		return float3(0, 0, 1);
-	}
+	//if (gi.x > 0.1) 
+	//{
+	//	return float3(1,0,0);
+	//}
+	//else if (gi.y > 0.1) {
+	//	return float3(0, 1, 0);
+	//}
+	//else if (gi.z > 0.1) {
+	//	return float3(0, 0, 1);
+	//}
+
 #if defined(DYNAMICLIGHTMAP_ON)
 	gi += SampleDynamicLightmap(input.dynamicLightmapUV);
-	return float3(1, 1, 1);
+	//return float3(0, 1, 0);
 
 #endif
 	return gi;
 #elif defined(DYNAMICLIGHTMAP_ON)//动态贴图开启，是通过Lighting Settings里Realtime Lighting-Realtime Global Illumination选中开启的，是对于静态物体而言
-	//return float3(1, 1, 1);
+	//return float3(0, 1, 1);
 	return SampleDynamicLightmap(input.dynamicLightmapUV);
 #else
-	//return float3(0, 1,0);
-	//return 1;
+	//return float3(0, 0, 1);
 
-		//动态物体是通过LightProbes采集周围间接光颜色
+		//Unity会把光照信息烘焙到LightProbes，动态物体是通过采集LightProbes获取周围间接光颜色，如果静态物体通过此方法获取，会是黑色
 	return SampleLightProbes(surface);
 #endif
 }
@@ -530,12 +539,18 @@ float4 LitPassFragment(VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_F
 	float3 color = input.vertexLighting * surface.diffuse;
 #if defined(_CASCADED_SHADOWS_HARD) || defined(_CASCADED_SHADOWS_SOFT)
 	//diffuseLight += MainLight(input.normal, input.worldPos);
-	color += MainLight(surface);
+	float shadowAttenuation = MixRealtimeAndBakedShadowAttenuation(
+		CascadedShadowAttenuation(surface.position), surface.position
+	);
+	color += MainLight(surface, shadowAttenuation);
 #endif
 
 	for (i = 0; i < min(unity_LightIndicesOffsetAndCount.y, 4); i++) {
 		lightIndex = unity_4LightIndices0[i];
-		float shadowAttenuation = ShadowAttenuation(lightIndex, input.worldPos);
+		//float shadowAttenuation = ShadowAttenuation(lightIndex, input.worldPos);
+		float shadowAttenuation = MixRealtimeAndBakedShadowAttenuation(
+			ShadowAttenuation(lightIndex, surface.position), surface.position
+		);
 		color += GenericLight(lightIndex, surface, shadowAttenuation);
 	}
 
