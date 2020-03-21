@@ -18,6 +18,7 @@ float4x4 unity_ObjectToWorld, unity_WorldToObject;
 float4 unity_LightIndicesOffsetAndCount;
 //受到影响的灯光的下标
 float4 unity_4LightIndices0, unity_4LightIndices1;
+float4 unity_ProbesOcclusion;
 float4 unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax;
 float4 unity_SpecCube0_ProbePosition, unity_SpecCube0_HDR;
 float4 unity_SpecCube1_BoxMin, unity_SpecCube1_BoxMax;
@@ -28,6 +29,12 @@ float4 unity_SHBr, unity_SHBg, unity_SHBb;
 float4 unity_SHC;
 CBUFFER_END
 
+CBUFFER_START(UnityPerMaterial)
+float4 _MainTex_ST;
+float _Cutoff;
+//float _Smoothness;
+CBUFFER_END
+
 #define MAX_VISIBLE_LIGHTS 16
 
 CBUFFER_START(_LightBuffer)
@@ -35,6 +42,7 @@ float4 _VisibleLightColors[MAX_VISIBLE_LIGHTS];
 float4 _VisibleLightDirectionsOrPositions[MAX_VISIBLE_LIGHTS];
 float4 _VisibleLightAttenuations[MAX_VISIBLE_LIGHTS];
 float4 _VisibleLightSpotDirections[MAX_VISIBLE_LIGHTS];
+float4 _VisibleLightOcclusionMasks[MAX_VISIBLE_LIGHTS];
 CBUFFER_END
 
 CBUFFER_START(_ShadowBuffer)
@@ -88,16 +96,17 @@ SAMPLER(samplerunity_DynamicLightmap);
 TEXTURE2D(unity_ShadowMask);
 SAMPLER(samplerunity_ShadowMask);
 
-CBUFFER_START(UnityPerMaterial)
-float4 _MainTex_ST;
-float _Cutoff;
-//float _Smoothness;
-CBUFFER_END
+
 
 
 #define UNITY_MATRIX_M unity_ObjectToWorld
 #define UNITY_MATRIX_I_M unity_WorldToObject
 
+#if !defined(LIGHTMAP_ON)
+#if defined(_SHADOWMASK)
+#define SHADOWS_SHADOWMASK
+#endif
+#endif
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/UnityInstancing.hlsl"
 
 
@@ -233,10 +242,18 @@ float RealtimeToBakedShadowsInterpolator(float3 worldPos) {
 	return saturate(d * _GlobalShadowData.y + _GlobalShadowData.z);
 }
 
-float MixRealtimeAndBakedShadowAttenuation(float realtime, float3 worldPos) {
+float MixRealtimeAndBakedShadowAttenuation(float realtime, float4 bakedShadows, int lightIndex, float3 worldPos) {
 	float t = RealtimeToBakedShadowsInterpolator(worldPos);
 	//float fadedRealtime = lerp(realtime, 1, t);
 	float fadedRealtime = saturate(realtime + t);
+	float4 occlusionMask = _VisibleLightOcclusionMasks[lightIndex];
+	float baked = dot(bakedShadows, occlusionMask);
+	bool hasBakedShadows = occlusionMask.x >= 0.0;
+#if defined(_SHADOWMASK)
+	if (hasBakedShadows) {
+		return min(fadedRealtime, baked);
+	}
+#endif
 	return fadedRealtime;
 }
 
@@ -463,14 +480,24 @@ float3 GlobalIllumination(VertexOutput input, LitSurface surface) {
 float4 BakedShadows(VertexOutput input, LitSurface surface) {
 #if defined(LIGHTMAP_ON)
 #if defined(_SHADOWMASK)
+	//return float4(1, 0, 0, 1);
 	return SAMPLE_TEXTURE2D(
 		unity_ShadowMask, samplerunity_ShadowMask, input.lightmapUV
 	);
 #endif
-#else
+#elif defined(_SHADOWMASK)
+	//return float4(0, 1, 0, 1);
+	if (unity_ProbeVolumeParams.x) {
+		return SampleProbeOcclusion(
+			TEXTURE3D_PARAM(unity_ProbeVolumeSH, samplerunity_ProbeVolumeSH),
+			surface.position, unity_ProbeVolumeWorldToObject,
+			unity_ProbeVolumeParams.y, unity_ProbeVolumeParams.z,
+			unity_ProbeVolumeMin, unity_ProbeVolumeSizeInv
+		);
+	}
+	return unity_ProbesOcclusion;
 #endif
-
-	return float4(0,1,0,1);
+	//return float4(0, 0, 1, 1);
 
 	return 1.0;
 }
@@ -522,6 +549,8 @@ VertexOutput LitPassVertex(VertexInput input) {
 	return output;
 }
 
+
+
 float4 LitPassFragment(VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_FACE_SEMANTIC) : SV_TARGET{
 	//计算unity_InstanceID
 	UNITY_SETUP_INSTANCE_ID(input);
@@ -553,12 +582,14 @@ float4 LitPassFragment(VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_F
 	PremultiplyAlpha(surface, albedoAlpha.a);
 #endif
 
+	float4 bakedShadows = BakedShadows(input, surface);
+
 	//float3 diffuseLight = input.vertexLighting;
 	float3 color = input.vertexLighting * surface.diffuse;
 #if defined(_CASCADED_SHADOWS_HARD) || defined(_CASCADED_SHADOWS_SOFT)
 	//diffuseLight += MainLight(input.normal, input.worldPos);
 	float shadowAttenuation = MixRealtimeAndBakedShadowAttenuation(
-		CascadedShadowAttenuation(surface.position), surface.position
+		CascadedShadowAttenuation(surface.position), bakedShadows, surface.position
 	);
 	color += MainLight(surface, shadowAttenuation);
 #endif
@@ -567,7 +598,8 @@ float4 LitPassFragment(VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_F
 		lightIndex = unity_4LightIndices0[i];
 		//float shadowAttenuation = ShadowAttenuation(lightIndex, input.worldPos);
 		float shadowAttenuation = MixRealtimeAndBakedShadowAttenuation(
-			ShadowAttenuation(lightIndex, surface.position), surface.position
+			ShadowAttenuation(lightIndex, surface.position), bakedShadows, 
+			surface.position
 		);
 		color += GenericLight(lightIndex, surface, shadowAttenuation);
 	}
@@ -588,11 +620,13 @@ float4 LitPassFragment(VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_F
 	//color = UNITY_ACCESS_INSTANCED_PROP(PerInstance, _EmissionColor).rgb;
 
 	//color = albedoAlpha;
-	color = BakedShadows(input, surface);
+	//color = BakedShadows(input, surface);
 	return float4(color, albedoAlpha.a);
 
 	/*float3 color = diffuseLight * albedo.rgb;
 	return float4(color, 1);*/
 }
+
+
 
 #endif // MYRP_LIT_INCLUDED

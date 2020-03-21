@@ -35,6 +35,7 @@ public class MyPipeline : RenderPipeline
     static int cascadedShadowMapSizeId = Shader.PropertyToID("_CascadedShadowMapSize");
     static int cascadedShadoStrengthId = Shader.PropertyToID("_CascadedShadowStrength");
     static int cascadeCullingSpheresId = Shader.PropertyToID("_CascadeCullingSpheres");
+    static int visibleLightOcclusionMasksId = Shader.PropertyToID("_VisibleLightOcclusionMasks");
 
     Vector4[] visibleLightColors = new Vector4[maxVisibleLights];
     Vector4[] visibleLightDirectionsOrPositions = new Vector4[maxVisibleLights];
@@ -43,12 +44,21 @@ public class MyPipeline : RenderPipeline
     Matrix4x4[] worldToShadowMatrices = new Matrix4x4[maxVisibleLights];
     Matrix4x4[] worldToShadowCascadeMatrices = new Matrix4x4[5];
     Vector4[] cascadeCullingSpheres = new Vector4[4];
+    Vector4[] visibleLightOcclusionMasks = new Vector4[maxVisibleLights];
 
     const string shadowsSoftKeyword = "_SHADOWS_SOFT";
     const string cascadedShadowsHardKeyword = "_CASCADED_SHADOWS_HARD";
     const string cascadedShadowsSoftKeyword = "_CASCADED_SHADOWS_SOFT";
     const string clippingKeyword = "_CLIPPING";
     const string shadowmaskKeyword = "_SHADOWMASK";
+
+    static Vector4[] occlusionMasks = {
+        new Vector4(-1f, 0f, 0f, 0f),
+        new Vector4(1f, 0f, 0f, 0f),
+        new Vector4(0f, 1f, 0f, 0f),
+        new Vector4(0f, 0f, 1f, 0f),
+        new Vector4(0f, 0f, 0f, 1f)
+    };
 
     RenderTexture shadowMap, cascadedShadowMap;
 
@@ -111,9 +121,8 @@ public class MyPipeline : RenderPipeline
 
 #if UNITY_EDITOR
     static Lightmapping.RequestLightsDelegate lightmappingLightsDelegate =
-        (Light[] inputLights, NativeArray<LightDataGI> outputLights) => 
+        (Light[] inputLights, NativeArray<LightDataGI> outputLights) =>
         {
-            Debug.LogError("lightmappingLightsDelegate");
             LightDataGI lightData = new LightDataGI();
             for (int i = 0; i < inputLights.Length; i++)
             {
@@ -564,6 +573,9 @@ public class MyPipeline : RenderPipeline
         cameraBuffer.SetGlobalVectorArray(
             visibleLightSpotDirectionsId, visibleLightSpotDirections
         );
+        cameraBuffer.SetGlobalVectorArray(
+            visibleLightOcclusionMasksId, visibleLightOcclusionMasks
+        );
 
         globalShadowData.z =
             1f - cullingParameters.shadowDistance * globalShadowData.y;
@@ -588,7 +600,10 @@ public class MyPipeline : RenderPipeline
             RendererConfiguration.PerObjectReflectionProbes |
             RendererConfiguration.PerObjectLightmaps |
             RendererConfiguration.PerObjectLightProbe |
-            RendererConfiguration.PerObjectLightProbeProxyVolume;
+            RendererConfiguration.PerObjectLightProbeProxyVolume |
+            RendererConfiguration.PerObjectShadowMask |
+            RendererConfiguration.PerObjectOcclusionProbe |
+            RendererConfiguration.PerObjectOcclusionProbeProxyVolume;
 
         drawSettings.sorting.flags = SortFlags.CommonOpaque;
 
@@ -652,6 +667,7 @@ public class MyPipeline : RenderPipeline
             Vector4 shadow = Vector4.zero;
 
             LightBakingOutput baking = light.light.bakingOutput;
+            visibleLightOcclusionMasks[i] = occlusionMasks[baking.occlusionMaskChannel + 1];
             if (baking.lightmapBakeType == LightmapBakeType.Mixed)
             {
                 shadowmaskExists |=
@@ -714,7 +730,6 @@ public class MyPipeline : RenderPipeline
             shadowData[i] = shadow;
         }
         CoreUtils.SetKeyword(cameraBuffer, shadowmaskKeyword, shadowmaskExists);
-
         //如果超过maxVisibleLights数量的灯光，该脚本不会传输给Shader
         //但是Unity自身可能会对超出maxVisibleLights的灯光，进行unity_4LightIndices0赋值，下标会找不到，_VisibleLightColors越界
         if (mainLightExists || cull.visibleLights.Count > maxVisibleLights)

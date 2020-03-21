@@ -7,11 +7,11 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: LitOpaque
+  m_Name: LitStaticOpaque
   m_Shader: {fileID: 4800000, guid: 5ede6b5156f8f1742af160b7201d16c6, type: 3}
   m_ShaderKeywords: _RECEIVE_SHADOWS
   m_LightmapFlags: 0
-  m_EnableInstancingVariants: 1
+  m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: 2000
   stringTagMap: {}
