@@ -51,6 +51,8 @@ public class MyPipeline : RenderPipeline
     const string cascadedShadowsSoftKeyword = "_CASCADED_SHADOWS_SOFT";
     const string clippingKeyword = "_CLIPPING";
     const string shadowmaskKeyword = "_SHADOWMASK";
+    const string distanceShadowmaskKeyword = "_DISTANCE_SHADOWMASK";
+    const string subtractiveLightingKeyword = "_SUBTRACTIVE_LIGHTING";
 
     static Vector4[] occlusionMasks = {
         new Vector4(-1f, 0f, 0f, 0f),
@@ -651,6 +653,7 @@ public class MyPipeline : RenderPipeline
     {
         mainLightExists = false;
         bool shadowmaskExists = false;
+        bool subtractiveLighting = false;
         shadowTileCount = 0;
         for (int i = 0; i < cull.visibleLights.Count; i++)
         {
@@ -672,6 +675,8 @@ public class MyPipeline : RenderPipeline
             {
                 shadowmaskExists |=
                     baking.mixedLightingMode == MixedLightingMode.Shadowmask;
+                subtractiveLighting |=
+                    baking.mixedLightingMode == MixedLightingMode.Subtractive;
             }
 
             if (light.lightType == LightType.Directional)
@@ -725,11 +730,24 @@ public class MyPipeline : RenderPipeline
                     //    shadow.y = shadowLight.shadows == LightShadows.Soft ? 1f : 0f;
                     //}
                 }
+                else
+                {
+                    visibleLightSpotDirections[i] = Vector4.one;
+                }
             }
             visibleLightAttenuations[i] = attenuation;
             shadowData[i] = shadow;
         }
-        CoreUtils.SetKeyword(cameraBuffer, shadowmaskKeyword, shadowmaskExists);
+
+        bool useDistanceShadowmask =
+            QualitySettings.shadowmaskMode == ShadowmaskMode.DistanceShadowmask;
+        CoreUtils.SetKeyword(cameraBuffer, shadowmaskKeyword, shadowmaskExists && !useDistanceShadowmask);
+        CoreUtils.SetKeyword(
+            cameraBuffer, distanceShadowmaskKeyword,
+            shadowmaskExists && useDistanceShadowmask
+        );
+        CoreUtils.SetKeyword( cameraBuffer, subtractiveLightingKeyword, subtractiveLighting);
+
         //如果超过maxVisibleLights数量的灯光，该脚本不会传输给Shader
         //但是Unity自身可能会对超出maxVisibleLights的灯光，进行unity_4LightIndices0赋值，下标会找不到，_VisibleLightColors越界
         if (mainLightExists || cull.visibleLights.Count > maxVisibleLights)
