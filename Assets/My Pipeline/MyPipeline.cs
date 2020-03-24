@@ -37,6 +37,8 @@ public class MyPipeline : RenderPipeline
     static int cascadeCullingSpheresId = Shader.PropertyToID("_CascadeCullingSpheres");
     static int visibleLightOcclusionMasksId = Shader.PropertyToID("_VisibleLightOcclusionMasks");
     static int subtractiveShadowColorId = Shader.PropertyToID("_SubtractiveShadowColor");
+    static int ditherTextureId = Shader.PropertyToID("_DitherTexture");
+    static int ditherTextureSTId = Shader.PropertyToID("_DitherTexture_ST");
 
     Vector4[] visibleLightColors = new Vector4[maxVisibleLights];
     Vector4[] visibleLightDirectionsOrPositions = new Vector4[maxVisibleLights];
@@ -93,8 +95,11 @@ public class MyPipeline : RenderPipeline
 
     Vector4 globalShadowData;
 
+    Texture2D ditherTexture;
+
     public MyPipeline(
-        bool dynamicBatching, bool instancing, 
+        bool dynamicBatching, bool instancing,
+        Texture2D ditherTexture,
         int shadowMapSize, float shadowDistance, float shadowFadeRange,
         int shadowCascades, Vector3 shadowCascadeSplit)
     {
@@ -111,6 +116,7 @@ public class MyPipeline : RenderPipeline
         {
             drawFlags |= DrawRendererFlags.EnableInstancing;
         }
+        this.ditherTexture = ditherTexture;
         this.shadowMapSize = shadowMapSize;
         this.shadowDistance = shadowDistance;
         globalShadowData.y = 1f / shadowFadeRange;
@@ -490,11 +496,21 @@ public class MyPipeline : RenderPipeline
     public override void Render(ScriptableRenderContext renderContext, Camera[] cameras)
     {
         base.Render(renderContext, cameras);
-
+        ConfigureDitherPattern(renderContext);
         foreach (var camera in cameras)
         {
             Render(renderContext, camera);
         }
+    }
+
+    void ConfigureDitherPattern(ScriptableRenderContext context)
+    {
+        cameraBuffer.SetGlobalTexture(ditherTextureId, ditherTexture);
+        cameraBuffer.SetGlobalVector(
+            ditherTextureSTId, new Vector4(1f / 64f, 1f / 64f, 0f, 0f)
+        );
+        context.ExecuteCommandBuffer(cameraBuffer);
+        cameraBuffer.Clear();
     }
 
     void Render(ScriptableRenderContext context, Camera camera)

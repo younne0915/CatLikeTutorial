@@ -10,10 +10,12 @@
 
 CBUFFER_START(UnityPerFrame)
 float4x4 unity_MatrixVP;
+float4 _DitherTexture_ST;
 CBUFFER_END
 
 CBUFFER_START(UnityPerDraw)
 float4x4 unity_ObjectToWorld, unity_WorldToObject;
+float4 unity_LODFade;
 //该物体(顶点、片元)受到几个灯光影响
 float4 unity_LightIndicesOffsetAndCount;
 //受到影响的灯光的下标
@@ -97,8 +99,8 @@ SAMPLER(samplerunity_DynamicLightmap);
 TEXTURE2D(unity_ShadowMask);
 SAMPLER(samplerunity_ShadowMask);
 
-
-
+TEXTURE2D(_DitherTexture);
+SAMPLER(sampler_DitherTexture);
 
 #define UNITY_MATRIX_M unity_ObjectToWorld
 #define UNITY_MATRIX_I_M unity_WorldToObject
@@ -589,13 +591,26 @@ VertexOutput LitPassVertex(VertexInput input) {
 	return output;
 }
 
-
+void LODCrossFadeClip(float4 clipPos) 
+{
+	float2 ditherUV = TRANSFORM_TEX(clipPos.xy, _DitherTexture);
+	float lodClipBias = SAMPLE_TEXTURE2D(_DitherTexture, sampler_DitherTexture, ditherUV).a;
+	if (unity_LODFade.x < 0.5) {
+		lodClipBias = 1.0 - lodClipBias;
+	}
+	clip(unity_LODFade.x - lodClipBias);
+}
 
 float4 LitPassFragment(VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_FACE_SEMANTIC) : SV_TARGET{
 	//计算unity_InstanceID
 	UNITY_SETUP_INSTANCE_ID(input);
 	input.normal = normalize(input.normal);
 	input.normal = IS_FRONT_VFACE(isFrontFace, input.normal, -input.normal);
+
+#if defined(LOD_FADE_CROSSFADE)
+	//return float4(1, 0, 0, 0);
+	LODCrossFadeClip(input.clipPos);
+#endif
 
 	//取数组PerInstance里_Color属性
 	//float3 albedo = UNITY_ACCESS_INSTANCED_PROP(PerInstance, _Color).rgb;

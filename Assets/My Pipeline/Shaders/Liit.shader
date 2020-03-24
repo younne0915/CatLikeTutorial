@@ -31,13 +31,15 @@
 			#pragma multi_compile_instancing
 			//#pragma instancing_options assumeuniformscaling
 			#pragma shader_feature _CLIPPING_ON
+			#pragma shader_feature _RECEIVE_SHADOWS
+
 			#pragma multi_compile _ _CASCADED_SHADOWS_HARD _CASCADED_SHADOWS_SOFT
 			#pragma multi_compile _ _SHADOWS_HARD
 			#pragma multi_compile _ _SHADOWS_SOFT
 			#pragma multi_compile _ LIGHTMAP_ON
 			#pragma multi_compile _ DYNAMICLIGHTMAP_ON
 			#pragma multi_compile _ _SHADOWMASK _DISTANCE_SHADOWMASK _SUBTRACTIVE_LIGHTING
-			#pragma shader_feature _RECEIVE_SHADOWS
+			#pragma multi_compile _ LOD_FADE_CROSSFADE
 
 			#pragma vertex LitPassVertex
 			#pragma fragment LitPassFragment
@@ -61,6 +63,7 @@
 			#pragma multi_compile_instancing
 			//#pragma instancing_options assumeuniformscaling
 			#pragma shader_feature _CLIPPING_OFF
+			#pragma multi_compile _ LOD_FADE_CROSSFADE
 			#pragma vertex ShadowCasterPassVertex
 			#pragma fragment ShadowCasterPassFragment
 
