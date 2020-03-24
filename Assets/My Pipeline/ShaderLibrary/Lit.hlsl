@@ -56,6 +56,7 @@ float4 _ShadowMapSize;
 float4 _CascadedShadowMapSize;
 float4 _GlobalShadowData;
 float _CascadedShadowStrength;
+float4 _SubtractiveShadowColor;
 CBUFFER_END
 
 CBUFFER_START(UnityPerCamera)
@@ -103,7 +104,8 @@ SAMPLER(samplerunity_ShadowMask);
 #define UNITY_MATRIX_I_M unity_WorldToObject
 
 #if !defined(LIGHTMAP_ON)
-#if defined(_SHADOWMASK)|| defined(_DISTANCE_SHADOWMASK)
+#if defined(_SHADOWMASK)|| defined(_DISTANCE_SHADOWMASK)|| \
+		defined(_SUBTRACTIVE_LIGHTING)
 #define SHADOWS_SHADOWMASK
 #endif
 #endif
@@ -262,6 +264,19 @@ float MixRealtimeAndBakedShadowAttenuation(float realtime, float4 bakedShadows, 
 		}
 		return lerp(realtime, baked, t);
 	}
+#elif defined(_SUBTRACTIVE_LIGHTING)
+#if !defined(LIGHTMAP_ON)
+	if (isMainLight) {
+		return min(fadedRealtime, bakedShadows.x);
+	}
+#endif
+
+#if !defined(_CASCADED_SHADOWS_HARD) && !defined(_CASCADED_SHADOWS_SOFT)
+	if (lightIndex == 0) {
+		return bakedShadows.x;
+	}
+#endif
+
 #endif
 	return fadedRealtime;
 }
@@ -379,7 +394,7 @@ float ShadowAttenuation(int index, float3 worldPos)
 }
 
 
-float CascadedShadowAttenuation(float3 worldPos) {
+float CascadedShadowAttenuation(float3 worldPos, bool applyStrength = true) {
 #if !defined(_RECEIVE_SHADOWS)
 	return 1.0;
 #elif !defined(_CASCADED_SHADOWS_HARD) && !defined(_CASCADED_SHADOWS_SOFT)
@@ -412,7 +427,12 @@ float CascadedShadowAttenuation(float3 worldPos) {
 	attenuation = SoftShadowAttenuation(shadowPos, true);
 #endif
 
-	return lerp(1, attenuation, _CascadedShadowStrength);
+	if (applyStrength) {
+		return lerp(1, attenuation, _CascadedShadowStrength);
+	}
+	else {
+		return attenuation;
+	}
 }
 
 
@@ -458,12 +478,15 @@ float3 SubtractiveLighting(LitSurface s, float3 bakedLighting) {
 	float3 lightDirection = _VisibleLightDirectionsOrPositions[0].xyz;
 	float3 diffuse = lightColor * saturate(dot(lightDirection, s.normal));
 	float shadowAttenuation = saturate(
-		CascadedShadowAttenuation(s.position) +
+		CascadedShadowAttenuation(s.position, false) +
 		RealtimeToBakedShadowsInterpolator(s.position)
 	);
 	float3 shadowedLightingGuess = diffuse * (1.0 - shadowAttenuation);
 	float3 subtractedLighting = bakedLighting - shadowedLightingGuess;
-	return saturate(subtractedLighting);
+	subtractedLighting = max(subtractedLighting, _SubtractiveShadowColor);
+	subtractedLighting =
+		lerp(bakedLighting, subtractedLighting, _CascadedShadowStrength);
+	return min(bakedLighting, subtractedLighting);
 }
 
 float3 GlobalIllumination(VertexOutput input, LitSurface surface) {
@@ -501,7 +524,8 @@ float4 BakedShadows(VertexOutput input, LitSurface surface) {
 		unity_ShadowMask, samplerunity_ShadowMask, input.lightmapUV
 	);
 #endif
-#elif defined(_SHADOWMASK) || defined(_DISTANCE_SHADOWMASK)
+#elif defined(_SHADOWMASK) || defined(_DISTANCE_SHADOWMASK)|| \
+		defined(_SUBTRACTIVE_LIGHTING)
 	//return float4(0, 1, 0, 1);
 	if (unity_ProbeVolumeParams.x) {
 		return SampleProbeOcclusion(
@@ -608,6 +632,7 @@ float4 LitPassFragment(VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_F
 		float shadowAttenuation = MixRealtimeAndBakedShadowAttenuation(
 			CascadedShadowAttenuation(surface.position), bakedShadows, 0, surface.position, true
 		);
+		//有阴影才会对主灯光颜色采样
 		color += MainLight(surface, shadowAttenuation);
 	#endif
 #endif
@@ -644,6 +669,7 @@ float4 LitPassFragment(VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_F
 	//);
 	//color = temp;
 	//color = MainLight(surface, temp);
+	//color = GlobalIllumination(input, surface) * surface.diffuse;
 	return float4(color, albedoAlpha.a);
 
 	/*float3 color = diffuseLight * albedo.rgb;

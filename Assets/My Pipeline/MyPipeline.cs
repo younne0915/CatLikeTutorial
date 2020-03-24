@@ -36,6 +36,7 @@ public class MyPipeline : RenderPipeline
     static int cascadedShadoStrengthId = Shader.PropertyToID("_CascadedShadowStrength");
     static int cascadeCullingSpheresId = Shader.PropertyToID("_CascadeCullingSpheres");
     static int visibleLightOcclusionMasksId = Shader.PropertyToID("_VisibleLightOcclusionMasks");
+    static int subtractiveShadowColorId = Shader.PropertyToID("_SubtractiveShadowColor");
 
     Vector4[] visibleLightColors = new Vector4[maxVisibleLights];
     Vector4[] visibleLightDirectionsOrPositions = new Vector4[maxVisibleLights];
@@ -675,8 +676,17 @@ public class MyPipeline : RenderPipeline
             {
                 shadowmaskExists |=
                     baking.mixedLightingMode == MixedLightingMode.Shadowmask;
-                subtractiveLighting |=
-                    baking.mixedLightingMode == MixedLightingMode.Subtractive;
+                //subtractiveLighting |=
+                //    baking.mixedLightingMode == MixedLightingMode.Subtractive;
+
+                if (baking.mixedLightingMode == MixedLightingMode.Subtractive)
+                {
+                    subtractiveLighting = true;
+                    cameraBuffer.SetGlobalColor(
+                        subtractiveShadowColorId,
+                        RenderSettings.subtractiveShadowColor.linear
+                    );
+                }
             }
 
             if (light.lightType == LightType.Directional)
