@@ -33,9 +33,7 @@ public class MyPipelineAsset : RenderPipelineAsset
 
     [SerializeField]
     float shadowDistance = 100f;
-	
-	[SerializeField]
-    ShadowCascades shadowCascades = ShadowCascades.Four;
+
 
     [SerializeField, HideInInspector]
     float twoCascadesSplit = 0.25f;
@@ -49,6 +47,34 @@ public class MyPipelineAsset : RenderPipelineAsset
     [SerializeField]
     Texture2D ditherTexture = null;
 
+    [SerializeField, Range(0f, 120f)]
+    float ditherAnimationSpeed = 30f;
+
+
+
+    [SerializeField]
+    ShadowCascades shadowCascades = ShadowCascades.Four;
+
+
+    [SerializeField]
+    bool supportLODCrossFading = true;
+
+    public bool HasShadowCascades
+    {
+        get
+        {
+            return shadowCascades != ShadowCascades.Zero;
+        }
+    }
+
+    public bool HasLODCrossFading
+    {
+        get
+        {
+            return supportLODCrossFading;
+        }
+    }
+
     /// <summary>
     /// 每次改变MyPipelineAsset的值，InternalCreatePipeline就会被调用
     /// 当动态batch和GPU instancing都可用的时候，Unity优先使用GPU instancing
@@ -60,7 +86,7 @@ public class MyPipelineAsset : RenderPipelineAsset
         Vector3 shadowCascadeSplit = shadowCascades == ShadowCascades.Four ?
             fourCascadesSplit : new Vector3(twoCascadesSplit, 0f);
         return new MyPipeline(dynamicBatching, instancing,
-            ditherTexture,
+            ditherTexture, ditherAnimationSpeed,
             (int)shadowMapSize,
             shadowDistance, shadowFadeRange,
             (int)shadowCascades, shadowCascadeSplit);
