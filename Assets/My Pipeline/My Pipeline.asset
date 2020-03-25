@@ -21,5 +21,6 @@ MonoBehaviour:
   shadowFadeRange: 1
   ditherTexture: {fileID: 2800000, guid: 456e1d0706474b94cb240e9529c5e931, type: 3}
   ditherAnimationSpeed: 30
-  shadowCascades: 0
   supportLODCrossFading: 0
+  defaultStack: {fileID: 11400000, guid: 1410db893d1448947a81470db285dc3d, type: 2}
+  shadowCascades: 0
