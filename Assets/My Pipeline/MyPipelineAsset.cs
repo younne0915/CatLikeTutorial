@@ -6,6 +6,16 @@ using UnityEngine.Experimental.Rendering;
 [CreateAssetMenu(menuName ="Rendering/My Pipeline")]
 public class MyPipelineAsset : RenderPipelineAsset
 {
+
+    public enum MSAAMode
+    {
+        Off = 1,
+        _2x = 2,
+        _4x = 4,
+        _8x = 8
+    }
+
+
     public enum ShadowMapSize
     {
         _256 = 256,
@@ -59,10 +69,8 @@ public class MyPipelineAsset : RenderPipelineAsset
     [SerializeField, Range(0.25f, 2f)]
     float renderScale = 1f;
 
-
-
-
-
+    [SerializeField]
+    MSAAMode MSAA = MSAAMode.Off;
 
 
     public bool HasShadowCascades
@@ -100,7 +108,7 @@ public class MyPipelineAsset : RenderPipelineAsset
             (int)shadowMapSize,
             shadowDistance, shadowFadeRange,
             (int)shadowCascades, shadowCascadeSplit,
-            renderScale
+            renderScale, (int)MSAA
             );
     }
 }
