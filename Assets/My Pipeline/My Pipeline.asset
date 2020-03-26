@@ -23,4 +23,5 @@ MonoBehaviour:
   ditherAnimationSpeed: 30
   supportLODCrossFading: 0
   defaultStack: {fileID: 11400000, guid: 1410db893d1448947a81470db285dc3d, type: 2}
+  renderScale: 1
   shadowCascades: 0

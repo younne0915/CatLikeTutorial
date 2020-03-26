@@ -111,12 +111,15 @@ public class MyPipeline : RenderPipeline
     float lastDitherTime;
     int ditherSTIndex = -1;
     MyPostProcessingStack defaultStack;
+    float renderScale;
 
     public MyPipeline(
         bool dynamicBatching, bool instancing, MyPostProcessingStack defaultStack,
         Texture2D ditherTexture, float ditherAnimationSpeed,
         int shadowMapSize, float shadowDistance, float shadowFadeRange,
-        int shadowCascades, Vector3 shadowCascadeSplit)
+        int shadowCascades, Vector3 shadowCascadeSplit,
+        float renderScale
+        )
     {
         GraphicsSettings.lightsUseLinearIntensity = true;
         if (SystemInfo.usesReversedZBuffer)
@@ -142,6 +145,7 @@ public class MyPipeline : RenderPipeline
         globalShadowData.y = 1f / shadowFadeRange;
         this.shadowCascades = shadowCascades;
         this.shadowCascadeSplit = shadowCascadeSplit;
+        this.renderScale = renderScale;
 
 #if UNITY_EDITOR
         Lightmapping.SetDelegate(lightmappingLightsDelegate);
@@ -632,15 +636,28 @@ public class MyPipeline : RenderPipeline
         MyPostProcessingStack activeStack = myPipelineCamera ?
             myPipelineCamera.PostProcessingStack : defaultStack;
 
-        if (activeStack)
+        bool scaledRendering =
+            (renderScale < 1f || renderScale > 1f) && camera.cameraType == CameraType.Game;
+
+        int renderWidth = camera.pixelWidth;
+        int renderHeight = camera.pixelHeight;
+        if (scaledRendering)
+        {
+            renderWidth = (int)(renderWidth * renderScale);
+            renderHeight = (int)(renderHeight * renderScale);
+        }
+
+        bool renderToTexture = scaledRendering || activeStack;
+
+        if (renderToTexture)
         {
             cameraBuffer.GetTemporaryRT(
-                cameraColorTextureId, camera.pixelWidth, camera.pixelHeight, 0,
+                cameraColorTextureId, renderWidth, renderHeight, 0,
                 FilterMode.Bilinear
             );
 
             cameraBuffer.GetTemporaryRT(
-                cameraDepthTextureId, camera.pixelWidth, camera.pixelHeight, 24,
+                cameraDepthTextureId, renderWidth, renderHeight, 24,
                 FilterMode.Point, RenderTextureFormat.Depth
             );
 
@@ -721,7 +738,7 @@ public class MyPipeline : RenderPipeline
         {
             activeStack.RenderAfterOpaque(
                 postProcessingBuffer, cameraColorTextureId, cameraDepthTextureId,
-                camera.pixelWidth, camera.pixelHeight
+                renderWidth, renderHeight
             );
             context.ExecuteCommandBuffer(postProcessingBuffer);
             postProcessingBuffer.Clear();
@@ -743,15 +760,24 @@ public class MyPipeline : RenderPipeline
         );
 
         DrawDefaultPipeline(context, camera);
-        
-        if (activeStack)
+
+        if (renderToTexture)
         {
-            activeStack.RenderAfterTransparent(
-                postProcessingBuffer, cameraColorTextureId, cameraDepthTextureId,
-                camera.pixelWidth, camera.pixelHeight
+            if (activeStack)
+            {
+                activeStack.RenderAfterTransparent(
+                    postProcessingBuffer, cameraColorTextureId,
+                    cameraDepthTextureId, renderWidth, renderHeight
                 );
-            context.ExecuteCommandBuffer(postProcessingBuffer);
-            postProcessingBuffer.Clear();
+                context.ExecuteCommandBuffer(postProcessingBuffer);
+                postProcessingBuffer.Clear();
+            }
+            else
+            {
+                cameraBuffer.Blit(
+                    cameraColorTextureId, BuiltinRenderTextureType.CameraTarget
+                );
+            }
             cameraBuffer.ReleaseTemporaryRT(cameraColorTextureId);
             cameraBuffer.ReleaseTemporaryRT(cameraDepthTextureId);
         }
