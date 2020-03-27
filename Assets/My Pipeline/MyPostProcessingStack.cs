@@ -10,7 +10,21 @@ public class MyPostProcessingStack : ScriptableObject
     [SerializeField]
     bool depthStripes;
 
-    enum Pass { Copy, Blur, DepthStripes };
+    [SerializeField]
+    bool toneMapping;
+
+    [SerializeField, Range(1f, 100f)]
+    float toneMappingRange = 100f;
+
+    enum Pass { Copy, Blur, DepthStripes, ToneMapping };
+
+    public bool NeedsDepth
+    {
+        get
+        {
+            return depthStripes;
+        }
+    }
 
     static Mesh fullScreenTriangle;
     static Material material;
@@ -47,13 +61,23 @@ public class MyPostProcessingStack : ScriptableObject
             };
     }
 
+    void ToneMapping(
+        CommandBuffer cb,
+        RenderTargetIdentifier sourceId, RenderTargetIdentifier destinationId
+    )
+    {
+        cb.BeginSample("Tone Mapping");
+        Blit(cb, sourceId, destinationId, Pass.ToneMapping);
+        cb.EndSample("Tone Mapping");
+    }
+
     void DepthStripes(
         CommandBuffer cb, int cameraColorId, int cameraDepthId,
-        int width, int height
+        int width, int height, RenderTextureFormat format
     )
     {
         cb.BeginSample("Depth Stripes");
-        cb.GetTemporaryRT(tempTexId, width, height);
+        cb.GetTemporaryRT(tempTexId, width, height, 0, FilterMode.Point, format);
         cb.SetGlobalTexture(depthTexId, cameraDepthId);
         Blit(cb, cameraColorId, tempTexId, Pass.DepthStripes);
         Blit(cb, tempTexId, cameraColorId);
@@ -79,36 +103,49 @@ public class MyPostProcessingStack : ScriptableObject
 
     public void RenderAfterOpaque(
         CommandBuffer cb, int cameraColorId, int cameraDepthId,
-        int width, int height, int samples
+        int width, int height, int samples, RenderTextureFormat format
     )
     {
         InitializeStatic();
         if (depthStripes)
         {
-            DepthStripes(cb, cameraColorId, cameraDepthId, width, height);
+            DepthStripes(cb, cameraColorId, cameraDepthId, width, height, format);
         }
     }
 
     public void RenderAfterTransparent(
         CommandBuffer cb, int cameraColorId, int cameraDepthId,
-        int width, int height, int samples
+        int width, int height, int samples, RenderTextureFormat format
     )
     {
         //InitializeStatic();
         //DepthStripes(cb, cameraColorId, cameraDepthId, width, height);
         if (blurStrength > 0)
         {
-            if (samples > 1)
+            if (toneMapping || samples > 1)
+            //if (false)
             {
                 cb.GetTemporaryRT(
                     resolvedTexId, width, height, 0, FilterMode.Bilinear
                 );
-                Blit(cb, cameraColorId, resolvedTexId);
+                if (toneMapping)
+                {
+                    ToneMapping(cb, cameraColorId, resolvedTexId);
+                }
+                else
+                {
+                    Blit(cb, cameraColorId, resolvedTexId);
+                }
                 Blur(cb, resolvedTexId, width, height);
                 cb.ReleaseTemporaryRT(resolvedTexId);
             }
+            else if (toneMapping)
+            {
+                ToneMapping(cb, cameraColorId, BuiltinRenderTextureType.CameraTarget);
+            }
             else
             {
+                //如果MSAA texture直接进行模糊，然后输出到Camera.target,
                 Blur(cb, cameraColorId, width, height);
             }
         }

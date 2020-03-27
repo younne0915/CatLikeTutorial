@@ -14,15 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   dynamicBatching: 0
   instancing: 1
-  shadowMapSize: 4096
+  shadowMapSize: 1024
   shadowDistance: 18.08
   twoCascadesSplit: 0.25
   fourCascadesSplit: {x: 0.067, y: 0.2, z: 0.467}
   shadowFadeRange: 1
   ditherTexture: {fileID: 2800000, guid: 456e1d0706474b94cb240e9529c5e931, type: 3}
   ditherAnimationSpeed: 30
-  supportLODCrossFading: 0
+  supportLODCrossFading: 1
   defaultStack: {fileID: 11400000, guid: 1410db893d1448947a81470db285dc3d, type: 2}
-  renderScale: 1
-  MSAA: 4
-  shadowCascades: 0
+  renderScale: 2
+  MSAA: 1
+  allowHDR: 0
+  shadowCascades: 2

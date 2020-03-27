@@ -72,6 +72,8 @@ public class MyPipelineAsset : RenderPipelineAsset
     [SerializeField]
     MSAAMode MSAA = MSAAMode.Off;
 
+    [SerializeField]
+    bool allowHDR;
 
     public bool HasShadowCascades
     {
@@ -108,7 +110,7 @@ public class MyPipelineAsset : RenderPipelineAsset
             (int)shadowMapSize,
             shadowDistance, shadowFadeRange,
             (int)shadowCascades, shadowCascadeSplit,
-            renderScale, (int)MSAA
+            renderScale, (int)MSAA, allowHDR
             );
     }
 }
