@@ -128,8 +128,12 @@ struct VertexInput {
 	float4 pos : POSITION;
 	float3 normal : NORMAL;
 	float2 uv : TEXCOORD0;
+#if defined(LIGHTMAP_ON)
 	float2 lightmapUV : TEXCOORD1;
+#endif
+#if defined(DYNAMICLIGHTMAP_ON)
 	float2 dynamicLightmapUV : TEXCOORD2;
+#endif
 	//声明一个instanceID，当GPU Instance可用时，获取该顶点对应的M 矩阵
 	UNITY_VERTEX_INPUT_INSTANCE_ID	//uint instanceID : SV_InstanceID;
 };
