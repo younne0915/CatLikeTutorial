@@ -13,6 +13,7 @@ float4x4 unity_MatrixVP;
 float4 _DitherTexture_ST;
 CBUFFER_END
 
+//为了让着色器兼容SRP，所有内置引擎属性必须在名为“UnityPerDraw”的CBUFFER中声明
 CBUFFER_START(UnityPerDraw)
 float4x4 unity_ObjectToWorld, unity_WorldToObject;
 float4 unity_LODFade;
