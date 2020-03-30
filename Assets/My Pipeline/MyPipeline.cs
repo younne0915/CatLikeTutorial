@@ -152,6 +152,8 @@ public class MyPipeline : RenderPipeline
         this.msaaSamples = Mathf.Max(QualitySettings.antiAliasing, 1);
         this.allowHDR = allowHDR;
 
+        GraphicsSettings.useScriptableRenderPipelineBatching = true;
+
 #if UNITY_EDITOR
         Lightmapping.SetDelegate(lightmappingLightsDelegate);
 #endif
@@ -592,6 +594,7 @@ public class MyPipeline : RenderPipeline
             Mathf.Min(shadowDistance, camera.farClipPlane);
 
 #if UNITY_EDITOR
+        //ScriptableRenderContext.EmitWorldGeometryForSceneView(camera);
         if (camera.cameraType == CameraType.SceneView)
         {
             ScriptableRenderContext.EmitWorldGeometryForSceneView(camera);
