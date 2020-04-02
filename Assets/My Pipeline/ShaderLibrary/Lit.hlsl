@@ -610,6 +610,7 @@ float4 LitPassFragment(VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_F
 	//计算unity_InstanceID
 	UNITY_SETUP_INSTANCE_ID(input);
 	input.normal = normalize(input.normal);
+	//#define IS_FRONT_VFACE(VAL, FRONT, BACK) ((VAL) ? (FRONT) : (BACK))
 	input.normal = IS_FRONT_VFACE(isFrontFace, input.normal, -input.normal);
 
 #if defined(LOD_FADE_CROSSFADE)
