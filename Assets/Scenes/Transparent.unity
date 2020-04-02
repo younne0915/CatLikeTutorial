@@ -221,6 +221,7 @@ MonoBehaviour:
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
+  pulseEmissionFreqency: 0
 --- !u!1 &107159005
 GameObject:
   m_ObjectHideFlags: 0
@@ -376,7 +377,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 140791178}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.49473834, y: 0.8150321, z: -2.3201232}
+  m_LocalPosition: {x: -4.8, y: 0.8150321, z: -4.97}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -398,6 +399,7 @@ MonoBehaviour:
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
+  pulseEmissionFreqency: 0
 --- !u!1 &147327154
 GameObject:
   m_ObjectHideFlags: 0
@@ -539,6 +541,7 @@ MonoBehaviour:
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
+  pulseEmissionFreqency: 0
 --- !u!1 &226519400
 GameObject:
   m_ObjectHideFlags: 0
@@ -647,6 +650,7 @@ MonoBehaviour:
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
+  pulseEmissionFreqency: 0
 --- !u!1 &226837026
 GameObject:
   m_ObjectHideFlags: 0
@@ -755,6 +759,7 @@ MonoBehaviour:
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
+  pulseEmissionFreqency: 0
 --- !u!1 &277985282
 GameObject:
   m_ObjectHideFlags: 0
@@ -862,8 +867,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   color: {r: 1, g: 0.9990903, b: 0.02352941, a: 1}
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
-  metallic: 0
+  metallic: 0.803
   smoothness: 0.5
+  pulseEmissionFreqency: 0
 --- !u!1 &282202186
 GameObject:
   m_ObjectHideFlags: 0
@@ -972,6 +978,7 @@ MonoBehaviour:
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
+  pulseEmissionFreqency: 0
 --- !u!1 &298087238
 GameObject:
   m_ObjectHideFlags: 0
@@ -1080,6 +1087,7 @@ MonoBehaviour:
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
+  pulseEmissionFreqency: 0
 --- !u!1 &333359918
 GameObject:
   m_ObjectHideFlags: 0
@@ -1180,6 +1188,7 @@ MonoBehaviour:
   emissionColor: {r: 0.8301887, g: 0.27803493, b: 0.27803493, a: 1}
   metallic: 0.916
   smoothness: 1
+  pulseEmissionFreqency: 0
 --- !u!135 &341877601
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -1433,7 +1442,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 714371707}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.5, z: 0}
+  m_LocalPosition: {x: -2.98, y: 1.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -1453,8 +1462,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   color: {r: 0, g: 0.29482263, b: 0.9811321, a: 1}
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
-  metallic: 0
-  smoothness: 0.48
+  metallic: 0.126
+  smoothness: 0.318
+  pulseEmissionFreqency: 0
 --- !u!1 &724680662
 GameObject:
   m_ObjectHideFlags: 0
@@ -1563,6 +1573,7 @@ MonoBehaviour:
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
+  pulseEmissionFreqency: 0
 --- !u!1 &758777694
 GameObject:
   m_ObjectHideFlags: 0
@@ -1671,6 +1682,7 @@ MonoBehaviour:
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
+  pulseEmissionFreqency: 0
 --- !u!1 &1097767482
 GameObject:
   m_ObjectHideFlags: 0
@@ -1870,6 +1882,7 @@ MonoBehaviour:
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0.776
   smoothness: 0.396
+  pulseEmissionFreqency: 0
 --- !u!1 &1228060004
 GameObject:
   m_ObjectHideFlags: 0
@@ -1967,6 +1980,7 @@ MonoBehaviour:
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
+  pulseEmissionFreqency: 0
 --- !u!65 &1241327716
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2133,6 +2147,7 @@ MonoBehaviour:
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
+  pulseEmissionFreqency: 0
 --- !u!1 &1554008987
 GameObject:
   m_ObjectHideFlags: 0
@@ -2241,6 +2256,7 @@ MonoBehaviour:
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
+  pulseEmissionFreqency: 0
 --- !u!1 &1676936606
 GameObject:
   m_ObjectHideFlags: 0
@@ -2349,6 +2365,7 @@ MonoBehaviour:
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
+  pulseEmissionFreqency: 0
 --- !u!1 &1705523223
 GameObject:
   m_ObjectHideFlags: 0
@@ -2457,6 +2474,7 @@ MonoBehaviour:
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
+  pulseEmissionFreqency: 0
 --- !u!1 &1708517165
 GameObject:
   m_ObjectHideFlags: 0
@@ -2565,6 +2583,7 @@ MonoBehaviour:
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
+  pulseEmissionFreqency: 0
 --- !u!1 &1758450204
 GameObject:
   m_ObjectHideFlags: 0
@@ -2673,6 +2692,7 @@ MonoBehaviour:
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
+  pulseEmissionFreqency: 0
 --- !u!1 &1783296761
 GameObject:
   m_ObjectHideFlags: 0
@@ -2781,6 +2801,7 @@ MonoBehaviour:
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
+  pulseEmissionFreqency: 0
 --- !u!1 &1803717583
 GameObject:
   m_ObjectHideFlags: 0
@@ -2889,6 +2910,7 @@ MonoBehaviour:
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
+  pulseEmissionFreqency: 0
 --- !u!1 &1894385849
 GameObject:
   m_ObjectHideFlags: 0
@@ -3135,6 +3157,7 @@ MonoBehaviour:
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
   metallic: 0
   smoothness: 0.5
+  pulseEmissionFreqency: 0
 --- !u!1 &2071458606
 GameObject:
   m_ObjectHideFlags: 0
@@ -3160,7 +3183,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2071458606}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.57, y: 1.29, z: -4.511}
+  m_LocalPosition: {x: -3.57, y: 1.29, z: -2.41}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_Children: []
   m_Father: {fileID: 0}
