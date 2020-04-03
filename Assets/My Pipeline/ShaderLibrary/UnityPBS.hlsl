@@ -34,6 +34,13 @@ half3 BRDF3_Direct(half3 diffColor, half3 specColor, half rlPow4, half smoothnes
 	return diffColor + specular * specColor;
 }
 
+half3 BRDF3_Indirect(half3 diffColor, half3 specColor, UnityIndirect indirect, half grazingTerm, half fresnelTerm)
+{
+	half3 c = indirect.diffuse * diffColor;
+	c += indirect.specular * lerp(specColor, grazingTerm, fresnelTerm);
+	return c;
+}
+
 // Old school, not microfacet based Modified Normalized Blinn-Phong BRDF
 // Implementation uses Lookup texture for performance
 //
@@ -56,6 +63,7 @@ half4 BRDF3_Unity_PBS(half3 diffColor, half3 specColor, half oneMinusReflectivit
 	half rlPow4 = rlPow4AndFresnelTerm.x; // power exponent must match kHorizontalWarpExp in NHxRoughness() function in GeneratedTextures.cpp
 	half fresnelTerm = rlPow4AndFresnelTerm.y;
 
+	//(1 - oneMinusReflectivity)表示高光反射占得比重
 	half grazingTerm = saturate(smoothness + (1 - oneMinusReflectivity));
 
 	half3 color = BRDF3_Direct(diffColor, specColor, rlPow4, smoothness);
@@ -64,6 +72,23 @@ half4 BRDF3_Unity_PBS(half3 diffColor, half3 specColor, half oneMinusReflectivit
 
 	return half4(color, 1);
 }
+
+//-------------------------------------------------------------------------------------
+// Default BRDF to use:
+#if !defined (UNITY_BRDF_PBS) // allow to explicitly override BRDF in custom shader
+	// still add safe net for low shader models, otherwise we might end up with shaders failing to compile
+#if SHADER_TARGET < 30 || defined(SHADER_TARGET_SURFACE_ANALYSIS) // only need "something" for surface shader analysis pass; pick the cheap one
+#define UNITY_BRDF_PBS BRDF3_Unity_PBS
+#elif defined(UNITY_PBS_USE_BRDF3)
+#define UNITY_BRDF_PBS BRDF3_Unity_PBS
+#elif defined(UNITY_PBS_USE_BRDF2)
+#define UNITY_BRDF_PBS BRDF2_Unity_PBS
+#elif defined(UNITY_PBS_USE_BRDF1)
+#define UNITY_BRDF_PBS BRDF1_Unity_PBS
+#else
+#error something broke in auto-choosing BRDF
+#endif
+#endif
 
 half4 fragForwardBaseInternal(VertexOutputForwardBase i)
 {

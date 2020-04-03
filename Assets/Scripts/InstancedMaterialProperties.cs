@@ -38,6 +38,8 @@ public class InstancedMaterialProperties : MonoBehaviour
         emissionColor *= 0.5f +
             0.5f * Mathf.Cos(2f * Mathf.PI * pulseEmissionFreqency * Time.time);
         OnValidate();
+
+        //为动态物体设置自发光，从而影响其他
         DynamicGI.SetEmissive(GetComponent<MeshRenderer>(), emissionColor);
         emissionColor = originalEmissionColor;
     }
