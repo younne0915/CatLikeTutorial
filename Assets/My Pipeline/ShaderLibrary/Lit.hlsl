@@ -323,7 +323,7 @@ float HardShadowAttenuation(float4 shadowPos, bool cascade = false) {
 //}
 
 float3 SampleLightProbes(LitSurface s) {
-	//如果该物体是有LPPV，那么就采样LPPV
+	//如果该物体是有LPPV，那么就采样LPPV，LPPV一般用在重要物体上，LPPV目前不支持移动平台
 	if (unity_ProbeVolumeParams.x) {
 		return SampleProbeVolumeSH4(
 			TEXTURE3D_PARAM(unity_ProbeVolumeSH, samplerunity_ProbeVolumeSH),
@@ -332,7 +332,7 @@ float3 SampleLightProbes(LitSurface s) {
 			unity_ProbeVolumeMin, unity_ProbeVolumeSizeInv
 		);
 	}
-	else {
+	else {//Light Probes一般用在小物件上
 		float4 coefficients[7];
 		coefficients[0] = unity_SHAr;
 		coefficients[1] = unity_SHAg;
