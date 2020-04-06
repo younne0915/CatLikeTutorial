@@ -253,17 +253,23 @@ float RealtimeToBakedShadowsInterpolator(float3 worldPos) {
 
 float MixRealtimeAndBakedShadowAttenuation(float realtime, float4 bakedShadows, int lightIndex, float3 worldPos,
 	bool isMainLight = false) {
+
 	float t = RealtimeToBakedShadowsInterpolator(worldPos);
 	//float fadedRealtime = lerp(realtime, 1, t);
 	float fadedRealtime = saturate(realtime + t);
 	float4 occlusionMask = _VisibleLightOcclusionMasks[lightIndex];
 	float baked = dot(bakedShadows, occlusionMask);
 	bool hasBakedShadows = occlusionMask.x >= 0.0;
+	return fadedRealtime;
 #if defined(_SHADOWMASK)
+	//return fadedRealtime;
+	
 	if (hasBakedShadows) {
 		return min(fadedRealtime, baked);
 	}
 #elif defined(_DISTANCE_SHADOWMASK)
+	//return 0;
+
 	if (hasBakedShadows) {
 		bool bakedOnly = _VisibleLightSpotDirections[lightIndex].w > 0.0;
 		if (!isMainLight &&bakedOnly) {
@@ -285,6 +291,8 @@ float MixRealtimeAndBakedShadowAttenuation(float realtime, float4 bakedShadows, 
 #endif
 
 #endif
+
+	//return float4(1, 0, 0, 1);
 	return fadedRealtime;
 }
 
@@ -685,10 +693,12 @@ float4 LitPassFragment(VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_F
 
 	//color = albedoAlpha;
 	//color = BakedShadows(input, surface);
-	//float temp = MixRealtimeAndBakedShadowAttenuation(
-	//	CascadedShadowAttenuation(surface.position), bakedShadows, 0, surface.position
-	//);
-	//color = temp;
+	float temp = MixRealtimeAndBakedShadowAttenuation(
+		CascadedShadowAttenuation(surface.position), bakedShadows, 0, surface.position
+	);
+	color = temp;
+	/*color = float3(bakedShadows.x, 0,0);
+	color = bakedShadows;*/
 	//color = MainLight(surface, temp);
 	//color = GlobalIllumination(input, surface) * surface.diffuse;
 	return float4(color, albedoAlpha.a);
