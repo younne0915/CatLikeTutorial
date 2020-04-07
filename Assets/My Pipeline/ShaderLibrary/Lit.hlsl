@@ -506,9 +506,9 @@ float3 SubtractiveLighting(LitSurface s, float3 bakedLighting) {
 
 float3 GlobalIllumination(VertexOutput input, LitSurface surface) {
 	//return SampleLightProbes(surface);
-
+	float3 gi = 0;
 #if defined(LIGHTMAP_ON)
-	float3 gi = SampleLightmap(input.lightmapUV);
+	gi = SampleLightmap(input.lightmapUV);
 
 #if defined(_SUBTRACTIVE_LIGHTING)
 	gi = SubtractiveLighting(surface, gi);
@@ -606,6 +606,13 @@ VertexOutput LitPassVertex(VertexInput input) {
 
 void LODCrossFadeClip(float4 clipPos) 
 {
+	//float lodClipBias = (clipPos.y % 64) / 64;
+	////if (unity_LODFade.x < 0.5) {
+	////	lodClipBias = 1.0 - lodClipBias;
+	////}
+	//clip(unity_LODFade.x - lodClipBias);
+
+	//直接用裁剪空间的xy，因为图片是repeat
 	float2 ditherUV = TRANSFORM_TEX(clipPos.xy, _DitherTexture);
 	float lodClipBias = SAMPLE_TEXTURE2D(_DitherTexture, sampler_DitherTexture, ditherUV).a;
 	if (unity_LODFade.x < 0.5) {
@@ -615,6 +622,7 @@ void LODCrossFadeClip(float4 clipPos)
 }
 
 float4 LitPassFragment(VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_FACE_SEMANTIC) : SV_TARGET{
+
 	//计算unity_InstanceID
 	UNITY_SETUP_INSTANCE_ID(input);
 	input.normal = normalize(input.normal);
@@ -693,12 +701,12 @@ float4 LitPassFragment(VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_F
 
 	//color = albedoAlpha;
 	//color = BakedShadows(input, surface);
-	float temp = MixRealtimeAndBakedShadowAttenuation(
-		CascadedShadowAttenuation(surface.position), bakedShadows, 0, surface.position
-	);
-	color = temp;
-	/*color = float3(bakedShadows.x, 0,0);
-	color = bakedShadows;*/
+	//float temp = MixRealtimeAndBakedShadowAttenuation(
+	//	CascadedShadowAttenuation(surface.position), bakedShadows, 0, surface.position
+	//);
+	//color = temp;
+	///*color = float3(bakedShadows.x, 0,0);
+	//color = bakedShadows;*/
 	//color = MainLight(surface, temp);
 	//color = GlobalIllumination(input, surface) * surface.diffuse;
 	return float4(color, albedoAlpha.a);

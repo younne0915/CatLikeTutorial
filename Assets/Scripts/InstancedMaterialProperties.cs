@@ -34,6 +34,7 @@ public class InstancedMaterialProperties : MonoBehaviour
 
     void Update()
     {
+
         Color originalEmissionColor = emissionColor;
         emissionColor *= 0.5f +
             0.5f * Mathf.Cos(2f * Mathf.PI * pulseEmissionFreqency * Time.time);
