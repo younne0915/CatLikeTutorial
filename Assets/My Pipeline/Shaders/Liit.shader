@@ -20,6 +20,16 @@
     {
         Pass
         {
+			/*与MyPipeline中drawSettings的ShaderPassName的 SRPDefaultUnlit保持一致
+			var drawSettings = new DrawRendererSettings(camera, new ShaderPassName("SRPDefaultUnlit"))
+			{
+				flags = drawFlags
+			};
+			*/
+			Tags {
+				"LightMode" = "SRPDefaultUnlit"
+			}
+
 			Blend[_SrcBlend][_DstBlend]
 
 			Cull[_Cull]
